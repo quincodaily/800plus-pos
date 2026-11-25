@@ -164,6 +164,64 @@ td{font-size:13.5px}
 .fb b{display:block;font-size:12.5px}.fb span{color:var(--mut);font-size:11.5px}
 .fb.f1{top:2px;left:-6px}.fb.f1 i{background:#d4a0172a;color:#9a7200}.fb.f2{bottom:6px;right:-6px}.fb.f2 i{background:#2e7d3222;color:#2e7d32}
 @media(max-width:900px){.lhero{grid-template-columns:1fr;gap:24px;margin-top:0}.lright{order:-1;padding:18px 0}.lglow,.fb{display:none}.lfeat{max-width:none}.lleft h1{margin-top:6px}.lnav .pill{display:none}}
+</style><style>
+/* ===== cashier green theme (scoped to body.cash; admin and login keep the original look) ===== */
+body.cash{--red:#2f9e44;--red2:#1e7a33;--gold:#2f9e44;--err:#d93a3a}
+:root[data-theme="light"] body.cash,:root:not([data-theme="dark"]) body.cash{--bg:#f3f6f4;--bd:#e1e8e3;--tx:#1d2b22;--mut:#6b7a70}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) body.cash{--bg:#0f1a14;--card:#16231b;--tx:#e8f2ec;--mut:#9db0a4;--bd:#25382d;--red:#3fb957;--gold:#3fb957}}
+:root[data-theme="dark"] body.cash{--bg:#0f1a14;--card:#16231b;--tx:#e8f2ec;--mut:#9db0a4;--bd:#25382d;--red:#3fb957;--gold:#3fb957}
+body.cash input:focus,body.cash select:focus{outline:2px solid #2f9e4455;border-color:#2f9e44}
+body.cash .err,body.cash button.x,body.cash .tag.r{color:var(--err)}body.cash .tag.r{background:var(--err);color:#fff}
+body.cash aside{background:linear-gradient(180deg,#36a84a,#2a8a3d);border-right:0;gap:12px;position:sticky;top:0;height:100vh;overflow:auto}
+body.cash .brand{display:flex;gap:10px;align-items:center;padding-bottom:12px;border-bottom:1px solid #ffffff30}
+body.cash .brand b{display:block;font-size:15px}body.cash .brand .mark{width:38px;height:38px;font-size:13px;background:#ffffff;color:#2a8a3d;flex:none}
+body.cash .un{font-size:20px;margin:4px 0 0}
+body.cash .sc{background:#ffffff1c;border:1px solid #ffffff2e;border-radius:12px;padding:12px;font-size:10.5px;letter-spacing:.08em}body.cash .sc b{font-size:22px;letter-spacing:0}
+body.cash .qa button{background:#ffffff1c;border-color:#ffffff38;border-radius:9px}
+body.cash main{padding:0;background:var(--bg)}
+body.cash .mh{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--bd)}
+body.cash .mh h2{margin:0;font-size:16px}
+body.cash .vt{display:flex;gap:6px}body.cash .vt button{padding:7px 11px;border-radius:9px;color:var(--mut)}body.cash .vt button.on{background:#2f9e4418;border-color:#2f9e44;color:#2f9e44}
+body.cash .sbar{padding:14px 20px 4px}body.cash .sbar input{border:1px solid var(--bd);border-radius:12px;padding:13px 14px;font-size:15px;background:var(--card)}
+body.cash .sbar button.p{background:linear-gradient(180deg,#36a84a,#2a8a3d);border-radius:12px;padding:0 22px;box-shadow:0 4px 12px #2f9e4440}
+body.cash #pm{padding:14px 20px 24px}
+body.cash .grid{margin-top:0}
+body.cash .grid.pg{grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:14px}
+body.cash .grid.pl{grid-template-columns:1fr;gap:8px}
+body.cash .pc{display:flex;flex-direction:column;gap:8px;text-align:left;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--bd);box-shadow:0 1px 2px #0000000a;transition:border-color .15s,box-shadow .15s,transform .05s}
+body.cash .pc:hover:not(:disabled){border-color:#2f9e44;box-shadow:0 6px 18px #2f9e4422;filter:none}
+body.cash .pc:disabled{opacity:.5}
+body.cash .pi{width:44px;height:44px;border-radius:12px;background:#2f9e4418;color:#2f9e44;display:flex;align-items:center;justify-content:center;flex:none}
+body.cash .pc .n{font-size:14px;font-weight:600;line-height:1.3}
+body.cash .pf{margin-top:auto;border-top:1px solid var(--bd);padding-top:8px;display:flex;flex-direction:column;gap:2px}
+body.cash .pc .pr{color:#2f9e44;font-size:18px;font-weight:800;margin:0}
+body.cash .stk2{font-size:12px;color:var(--mut)}body.cash .stk2.low{color:#e08a00;font-weight:600}body.cash .stk2.out{color:var(--err);font-weight:600}
+body.cash .bc{font:11px ui-monospace,Menlo,monospace;color:var(--mut);opacity:.85}
+body.cash .pl .pc{flex-direction:row;align-items:center;gap:14px;padding:10px 14px}
+body.cash .pl .pb{flex:1;min-width:0}body.cash .pl .pf{margin:0;border:0;padding:0;flex-direction:row;align-items:center;gap:16px}
+body.cash .more{grid-column:1/-1;text-align:center;padding:8px}
+body.cash .rail{background:var(--card)}
+body.cash .rb{padding:14px 18px}body.cash .rh{font-size:12px;color:var(--mut);letter-spacing:.08em}
+body.cash .cl{max-height:34vh;overflow:auto;margin:0 -4px;padding:0 4px}
+body.cash .emp{padding:16px 0;font-weight:600}
+body.cash .ci{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}body.cash .ci:last-child{border:0}
+body.cash .cn{min-width:0;font-size:13px}body.cash .cn b{font-weight:600}
+body.cash .cq{display:flex;align-items:center;gap:6px}body.cash .cq button{width:26px;height:26px;padding:0;border-radius:8px;line-height:1}body.cash .cq span{min-width:20px;text-align:center;font-weight:700}
+body.cash .ct{font-weight:700;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}body.cash .cx{padding:2px 7px;border-radius:8px}
+body.cash .seg button.on,body.cash .pays button.on{border-color:#2f9e44;background:#2f9e4416;color:#2f9e44;font-weight:700}
+body.cash .pays button{padding:12px 6px;border-radius:10px}
+body.cash .tot.big{font-size:26px;color:var(--tx);border-top:1px solid var(--bd)}body.cash .tot.big span:last-child{color:#2f9e44;font-size:34px;letter-spacing:-.02em}
+body.cash .go{background:linear-gradient(180deg,#36a84a,#2a8a3d);border-radius:12px;box-shadow:0 8px 20px #2f9e4440}
+body.cash .foot b:last-child{color:#2f9e44}
+body.cash .bigin{background:var(--bg)}
+/* v4 admin pills */
+.bcode{display:inline-block;font:11px ui-monospace,Menlo,monospace;background:#8882;border-radius:5px;padding:1px 6px;margin-top:3px}
+.gain{color:var(--ok);font-weight:700}.mpill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:6px;background:#2563eb14;color:#2563eb;margin-top:3px}.mpill.lo{background:#d9770622;color:#b45309}
+.sbadge,.mv{font-size:12px;font-weight:600;padding:2px 9px;white-space:nowrap;display:inline-block}.sbadge{border-radius:99px}.mv{border-radius:6px}
+.sbadge.in,.mv.f{background:#2e7d3220;color:var(--ok)}.sbadge.low,.mv.s{background:#d9770622;color:#b45309}.sbadge.out{background:#b3121b1c;color:var(--red)}.mv.m{background:#2563eb18;color:#2563eb}.mv.n{background:#8882;color:var(--mut)}
+#sres .sr{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;margin-top:4px}
+.selp{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#8881;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-top:12px}
+.okmsg{margin-top:12px;color:var(--ok);font-weight:600;font-size:13px}
 </style></head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -239,10 +297,10 @@ async function doStockIn(){const p=prod(v('s1')),q=parseInt(v('s2'));if(!p||!(q>
 function supHTML(){return '<div class="card"><button class="p" onclick="supForm()">+ Add supplier</button><div class="tbl" style="margin-top:10px"><table><tr><th>Supplier</th><th>Contact</th><th>Phone</th><th>Email</th><th></th></tr>'+S.suppliers.map(s=>'<tr><td>'+esc(s.name)+'</td><td>'+esc(s.contact)+'</td><td>'+esc(s.phone)+'</td><td>'+esc(s.email)+'</td><td><button class="x" onclick="del(\'suppliers\',\''+s.id+'\')">✕</button></td></tr>').join('')+'</table></div></div>'}
 function supForm(){modal('<h3 style="margin-top:0;color:var(--red)">Add supplier</h3><label>Company</label><input id="g1"><label>Contact person</label><input id="g2"><label>Phone</label><input id="g3"><label>Email</label><input id="g4"><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveSup()">Save</button></div>')}
 async function saveSup(){if(!v('g1').trim())return;await db.collection('suppliers').add({name:v('g1').trim(),contact:v('g2'),phone:v('g3'),email:v('g4')});closeModal()}
-function repHTML(){const t0=new Date().setHours(0,0,0,0),from=S.range==='today'?t0:S.range==='week'?t0-6*864e5:0,l=S.sales.filter(s=>s.ts>=from).sort((a,b)=>b.ts-a.ts);
+function repHTML(){const t0=new Date().setHours(0,0,0,0),from=rangeFrom(S.range),l=S.sales.filter(s=>s.ts>=from).sort((a,b)=>b.ts-a.ts);
   const by={},top={};l.forEach(s=>{by[s.cashier]=(by[s.cashier]||0)+s.total;s.items.forEach(i=>top[i.name]=(top[i.name]||0)+i.qty)});
   const tp=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  return '<div class="card"><select style="width:auto" onchange="S.range=this.value;render()"><option value="today">Today</option><option value="week"'+(S.range==='week'?' selected':'')+'>Last 7 days</option><option value="all"'+(S.range==='all'?' selected':'')+'>All time</option></select><div class="stats" style="margin-top:12px"><div class="card stat"><span class="sm">Revenue</span><b>'+peso(l.reduce((a,s)=>a+s.total,0))+'</b></div><div class="card stat"><span class="sm">Profit</span><b>'+peso(l.reduce((a,x)=>a+x.total-(x.cost||0),0))+'</b></div><div class="card stat"><span class="sm">Transactions</span><b>'+l.length+'</b></div><div class="card stat"><span class="sm">Discounts given</span><b>'+peso(l.reduce((a,s)=>a+s.discount,0))+'</b></div></div><div class="pos" style="grid-template-columns:1fr 1fr"><div><b>By cashier</b><table>'+Object.entries(by).map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+peso(e[1])+'</td></tr>').join('')+'</table></div><div><b>Top sellers</b><table>'+tp.map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+e[1]+' sold</td></tr>').join('')+'</table></div></div><b>Sales log</b><div class="tbl"><table><tr><th>Time</th><th>Cashier</th><th>Items</th><th>Total</th></tr>'+l.slice(0,100).map(s=>'<tr><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td>'+s.items.map(i=>i.qty+'× '+esc(i.name)).join(', ')+(s.discount?' <span class="tag">'+esc(s.discType)+'</span>':'')+(s.oversold?' <span class="tag r">OVERSOLD</span>':'')+(s.offline?' <span class="tag w">offline</span>':'')+'</td><td>'+peso(s.total)+'</td></tr>').join('')+'</table></div></div>'}
+  return '<div class="card"><select style="width:auto" onchange="S.range=this.value;render()"><option value="today">Today</option><option value="week"'+(S.range==='week'?' selected':'')+'>Last 7 days</option><option value="month"'+(S.range==='month'?' selected':'')+'>This month</option><option value="all"'+(S.range==='all'?' selected':'')+'>All time</option></select> <button onclick="exportSold()">\u2b07 Export quantity sold</button><div class="stats" style="margin-top:12px"><div class="card stat"><span class="sm">Revenue</span><b>'+peso(l.reduce((a,s)=>a+s.total,0))+'</b></div><div class="card stat"><span class="sm">Profit</span><b>'+peso(l.reduce((a,x)=>a+x.total-(x.cost||0),0))+'</b></div><div class="card stat"><span class="sm">Transactions</span><b>'+l.length+'</b></div><div class="card stat"><span class="sm">Discounts given</span><b>'+peso(l.reduce((a,s)=>a+s.discount,0))+'</b></div></div><div class="pos" style="grid-template-columns:1fr 1fr"><div><b>By cashier</b><table>'+Object.entries(by).map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+peso(e[1])+'</td></tr>').join('')+'</table></div><div><b>Top sellers</b><table>'+tp.map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+e[1]+' sold</td></tr>').join('')+'</table></div></div><b>Sales log</b><div class="tbl"><table><tr><th>Time</th><th>Cashier</th><th>Items</th><th>Total</th></tr>'+l.slice(0,100).map(s=>'<tr><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td>'+s.items.map(i=>i.qty+'× '+esc(i.name)).join(', ')+(s.discount?' <span class="tag">'+esc(s.discType)+'</span>':'')+(s.oversold?' <span class="tag r">OVERSOLD</span>':'')+(s.offline?' <span class="tag w">offline</span>':'')+'</td><td>'+peso(s.total)+'</td></tr>').join('')+'</table></div></div>'}
 function usrHTML(){return '<div class="card"><button class="p" onclick="usrForm()">+ Add account</button><div class="tbl" style="margin-top:10px"><table><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr>'+S.users.map(u=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td style="white-space:nowrap"><button onclick="usrForm(\''+u.id+'\')">Edit</button> '+(u.username!==S.me?'<button class="x" onclick="del(\'users\',\''+u.id+'\')">✕</button>':'')+'</td></tr>').join('')+'</table></div></div>'}
 function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier">Cashier</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
 async function saveUsr(id){const un=v('u2').trim().toLowerCase();if(!un||!v('u3')){$('ue').textContent='Username and password are required.';return}
@@ -255,23 +313,27 @@ function loginHTML(){return '<div class="bar">🏷 20% Senior/PWD discount · Qu
 function render(){const a=$('app');if(!S.me||!user())return a.innerHTML=loginHTML();const u=user();
   if(u.role==='admin'){a.innerHTML='<header><div class="logo">800<b>+</b> Pharmacy</div><span class="sm" style="color:#fff">Admin</span><div class="sp"></div><span class="who">'+esc(u.name||u.username)+'</span><button onclick="logout()">Log out</button></header><div class="wrap">'+adminHTML()+'</div>';return}
   const f=document.activeElement&&document.activeElement.id==='q';a.innerHTML=shell(u);paintMain();paintRail();paintStatus();if(f)$('q').focus()}
+const PILL='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5a5 5 0 0 1-7-7l9-9a5 5 0 0 1 7 7z"/><path d="m8.5 8.5 7 7"/></svg>';
 function shell(u){const t0=new Date().setHours(0,0,0,0),m=S.sales.filter(s=>s.ts>=t0&&s.cashier===S.me);
-  return '<div class="shell"><aside><div class="logo">800<b>+</b> Pharmacy</div><div class="sm2">POS SYSTEM</div><h3>'+esc(u.name||u.username)+'</h3><div class="sm2">Cashier · '+esc(u.username)+'</div><div class="sc"><span>MY SALES TODAY</span><b>'+peso(m.reduce((a,s)=>a+s.total,0))+'</b><span>'+m.length+' transactions today</span></div><div class="sc"><span>PRODUCTS AVAILABLE</span><b>'+S.products.filter(p=>p.stock>0).length+'</b><span>in stock</span></div><div id="st"></div><div class="sp"></div><div class="sm2">QUICK ACTIONS</div><div class="qa"><button onclick="holdSale()">⏸ Hold</button><button onclick="heldList()">🗂 Held ('+S.held.length+')</button><button onclick="$(\'q\').focus()">🔍 Search</button><button onclick="logout()">⎋ Logout</button></div></aside><main><div class="sbar"><input id="q" placeholder="Scan barcode or search product name…" value="'+esc(S.q)+'" oninput="S.q=this.value;paintMain()" onkeydown="if(event.key===\'Enter\')enterSearch()"><button class="p" onclick="enterSearch()">Search</button><button onclick="S.browse=!S.browse;paintMain()">Browse all</button></div><div id="pm"></div></main><section class="rail" id="pr"></section></div>'}
-function gridHTML(){const q=S.q.trim().toLowerCase();const l=S.products.filter(p=>!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
-  if(!l.length)return '<div class="sm">No products found.</div>';
-  return l.map(p=>{const ex=days(p.expiry)<0;return '<button class="prod card" '+(p.stock<=0||ex?'disabled':'')+' onclick="addCart(\''+p.id+'\')"><div class="n">'+esc(p.name)+'</div><div class="sm">'+esc(p.generic||p.category||'')+'</div><div class="pr">'+peso(p.price)+'</div><div class="sm">Stock: '+p.stock+'</div><div>'+(p.rx?'<span class="tag r">Rx</span>':'')+expTag(p.expiry)+'</div></button>'}).join('')}
-function cartList(){if(!S.cart.length)return '<div class="emp"><div style="font-size:40px">🧺</div><b>No items in cart</b><div class="sm">Scan a barcode or search a product to begin</div></div>';
-  return '<div class="card" style="margin-top:12px"><table><tr><th>Item</th><th>Price</th><th>Qty</th><th style="text-align:right">Total</th><th></th></tr>'+S.cart.map(c=>{const p=prod(c.id);return '<tr><td>'+esc(p.name)+(p.rx?' <span class="tag r">Rx</span>':'')+'</td><td>'+peso(p.price)+'</td><td style="white-space:nowrap"><button onclick="qty(\''+c.id+'\',-1)">−</button> '+c.qty+' <button onclick="qty(\''+c.id+'\',1)">+</button></td><td style="text-align:right">'+peso(p.price*c.qty)+'</td><td><button class="x" onclick="qty(\''+c.id+'\',-99)">✕</button></td></tr>'}).join('')+'</table></div>'}
-function paintMain(){S.cart=S.cart.filter(c=>prod(c.id));const el=$('pm');if(!el)return;el.innerHTML=((S.q.trim()||S.browse)?'<div class="grid">'+gridHTML()+'</div>':'')+cartList()}
+  return '<div class="shell"><aside><div class="brand"><div class="mark">8+</div><div><b>800+ Pharmacy</b><span class="sm2">POS SYSTEM</span></div></div><h3 class="un">'+esc(u.name||u.username)+'</h3><div class="sm2">Cashier · '+esc(u.username)+'</div><div class="sc"><span>TODAY\'S SALES</span><b>'+peso(m.reduce((a,s)=>a+s.total,0))+'</b><span>'+m.length+' transactions today</span></div><div class="sc"><span>PRODUCTS AVAILABLE</span><b>'+S.products.filter(p=>p.stock>0).length+'</b><span>in stock</span></div><div id="st"></div><div class="sp"></div><div class="sm2">QUICK ACTIONS</div><div class="qa"><button onclick="holdSale()">⏸ Hold</button><button onclick="heldList()">🗂 Held ('+S.held.length+')</button><button onclick="$(\'q\').focus()">🔍 Search</button><button onclick="logout()">⎋ Logout</button></div></aside><main><div class="mh"><h2>Point of Sale</h2><div class="vt"><button id="vl" class="'+(S.view==='list'?'on':'')+'" onclick="setView(\'list\')" title="List view">☰</button><button id="vg" class="'+(S.view!=='list'?'on':'')+'" onclick="setView(\'grid\')" title="Grid view">▦</button></div></div><div class="sbar"><input id="q" placeholder="Scan barcode or search product name…" value="'+esc(S.q)+'" oninput="S.q=this.value;paintMain()" onkeydown="if(event.key===\'Enter\')enterSearch()"><button class="p" onclick="enterSearch()">Search</button></div><div id="pm"></div></main><section class="rail" id="pr"></section></div>'}
+function setView(v){S.view=v;$('vl').classList.toggle('on',v==='list');$('vg').classList.toggle('on',v!=='list');paintMain()}
+function gridHTML(){const q=S.q.trim().toLowerCase();let l=S.products.filter(p=>!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!l.length)return '<div class="sm" style="grid-column:1/-1;padding:20px">No products found.</div>';
+  const tot=l.length,cap=150;l=l.slice(0,cap);
+  return l.map(p=>{const ex=days(p.expiry)<0,out=p.stock<=0,low=!out&&p.stock<=(p.reorder||5);
+    return '<button class="pc" '+(out||ex?'disabled':'')+' onclick="addCart(\''+p.id+'\')"><div class="pi">'+PILL+'</div><div class="pb"><div class="n">'+esc(p.name)+'</div>'+(p.generic?'<div class="sm">'+esc(p.generic)+'</div>':'')+'</div><div class="pf"><div class="pr">'+peso(p.price)+'</div><div class="stk2 '+(out?'out':low?'low':'')+'">'+(out?'Out of stock':p.stock+' left')+'</div>'+(p.barcode?'<div class="bc">'+esc(p.barcode)+'</div>':'')+'<div>'+(p.rx?'<span class="tag r">Rx</span>':'')+expTag(p.expiry)+'</div></div></button>'}).join('')+(tot>cap?'<div class="sm more">Showing first '+cap+' of '+tot+' products — type to narrow down.</div>':'')}
+function cartRail(){if(!S.cart.length)return '<div class="emp">Cart is empty<div class="sm">Tap a product or scan a barcode</div></div>';
+  return S.cart.map(c=>{const p=prod(c.id);return '<div class="ci"><div class="cn"><b>'+esc(p.name)+'</b>'+(p.rx?' <span class="tag r">Rx</span>':'')+'<div class="sm">'+peso(p.price)+' each</div></div><div class="cq"><button onclick="qty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="qty(\''+c.id+'\',1)">+</button></div><div class="ct">'+peso(p.price*c.qty)+'</div><button class="x cx" onclick="qty(\''+c.id+'\',-99)">✕</button></div>'}).join('')}
+function paintMain(){S.cart=S.cart.filter(c=>prod(c.id));const el=$('pm');if(!el)return;el.innerHTML='<div class="grid '+(S.view==='list'?'pl':'pg')+'">'+gridHTML()+'</div>'}
 function paint(){paintMain();paintRail()}
-function addCart(id){const p=prod(id),c=S.cart.find(x=>x.id===id);if(c){if(c.qty<p.stock)c.qty++}else S.cart.push({id,qty:1});paint()}
-function qty(id,d){const c=S.cart.find(x=>x.id===id),p=prod(id);c.qty=Math.max(0,Math.min(p.stock,c.qty+d));S.cart=S.cart.filter(x=>x.qty>0);paint()}
+function addCart(id){const p=prod(id),c=S.cart.find(x=>x.id===id);if(c){if(c.qty<p.stock)c.qty++}else S.cart.push({id,qty:1});paintRail()}
+function qty(id,d){const c=S.cart.find(x=>x.id===id),p=prod(id);c.qty=Math.max(0,Math.min(p.stock,c.qty+d));S.cart=S.cart.filter(x=>x.qty>0);paintRail()}
 function enterSearch(){const q=S.q.trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>p.barcode&&p.barcode.toLowerCase()===q);if(!m.length){const l=S.products.filter(p=>p.name.toLowerCase().includes(q));if(l.length===1)m=l}
   if(m.length){const p=m[0];if(p.stock>0&&days(p.expiry)>=0)addCart(p.id);S.q='';$('q').value='';paint()}}
 function discAmt(sub){const m=S.dm;if(m==='senior'||m==='pwd')return sub*.2;const x=parseFloat(S.dval)||0;return Math.min(sub,m==='percent'?sub*Math.min(x,100)/100:x)}
 function calc(){const sub=S.cart.reduce((s,c)=>s+(prod(c.id)?prod(c.id).price*c.qty:0),0),disc=discAmt(sub);return{sub,disc,tot:sub-disc,rx:S.cart.some(c=>prod(c.id)&&prod(c.id).rx)}}
 function paintRail(){const sp=S.dm==='senior'||S.dm==='pwd',dm=[['percent','Percent (%)'],['fixed','Fixed (₱)'],['senior','Senior 20%'],['pwd','PWD 20%']],t=calc();
-  $('pr').innerHTML='<div class="rb"><div class="rh">🏷 ORDER DISCOUNT</div><div class="seg">'+dm.map(d=>'<button class="'+(S.dm===d[0]?'on':'')+'" onclick="S.dm=\''+d[0]+'\';paintRail()">'+d[1]+'</button>').join('')+'</div>'+(sp?'<input placeholder="Senior/PWD ID number" value="'+esc(S.idn)+'" oninput="S.idn=this.value">':'<div style="display:flex;gap:6px"><input type="number" min="0" placeholder="0.00" value="'+esc(S.dval)+'" oninput="S.dval=this.value;paintTot()"><button onclick="S.dval=\'\';paintRail()">✕</button></div>')+'</div><div class="rb" id="tots"></div><div class="rb"><div class="rh2">PAYMENT METHOD</div><div class="pays">'+[['cash','💵 Cash'],['gcash','📱 GCash'],['card','💳 Card']].map(p=>'<button class="'+(S.pay===p[0]?'on':'')+'" onclick="S.pay=\''+p[0]+'\';paintRail()">'+p[1]+'</button>').join('')+'</div>'+
+  $('pr').innerHTML='<div class="rb"><div class="rh">🛒 CURRENT ORDER</div><div class="cl">'+cartRail()+'</div></div><div class="rb"><div class="rh">🏷 ORDER DISCOUNT</div><div class="seg">'+dm.map(d=>'<button class="'+(S.dm===d[0]?'on':'')+'" onclick="S.dm=\''+d[0]+'\';paintRail()">'+d[1]+'</button>').join('')+'</div>'+(sp?'<input placeholder="Senior/PWD ID number" value="'+esc(S.idn)+'" oninput="S.idn=this.value">':'<div style="display:flex;gap:6px"><input type="number" min="0" placeholder="0.00" value="'+esc(S.dval)+'" oninput="S.dval=this.value;paintTot()"><button onclick="S.dval=\'\';paintRail()">✕</button></div>')+'</div><div class="rb" id="tots"></div><div class="rb"><div class="rh2">PAYMENT METHOD</div><div class="pays">'+[['cash','💵 Cash'],['gcash','📱 GCash'],['card','💳 Card']].map(p=>'<button class="'+(S.pay===p[0]?'on':'')+'" onclick="S.pay=\''+p[0]+'\';paintRail()">'+p[1]+'</button>').join('')+'</div>'+
   (S.pay==='cash'?'<label>Amount received</label><input id="cash" class="bigin" type="number" min="0" placeholder="0.00" value="'+esc(S.cash)+'" oninput="S.cash=this.value;paintTot()"><div class="qk">'+[50,100,500,1000].map(n=>'<button onclick="addCash('+n+')">'+n+'</button>').join('')+'<button onclick="addCash(0,1)">Exact</button><button onclick="addCash(0,2)">Round</button></div>':'<p class="sm">Amount received is set to the total.</p>')+
   (t.rx?'<label style="display:flex;gap:8px;align-items:center;color:var(--red)"><input type="checkbox" style="width:auto" '+(S.rxok?'checked':'')+' onchange="S.rxok=this.checked"> Valid prescription verified</label>':'')+'<button class="go" onclick="checkout()">✔ Process Sale</button><div class="err" id="ce"></div></div><div class="foot" id="ft"></div>';paintTot()}
 function addCash(n,m){const t=calc().tot;S.cash=String(m===1?t:m===2?Math.ceil(t):(parseFloat(S.cash)||0)+n);$('cash').value=S.cash;paintTot()}
@@ -411,7 +473,7 @@ function adminShell(u){const t=TITLES[S.tab]||['',''];
   '<div class="sp"></div><div class="auser"><div class="av">'+esc((u.name||u.username).slice(0,2).toUpperCase())+'</div><div><b>'+esc(u.name||u.username)+'</b><span>Administrator</span></div><button onclick="logout()" title="Log out" aria-label="Log out">'+ico('out',16)+'</button></div></aside>'+
   '<div class="amain"><div class="atop"><div><h1>'+t[0]+'</h1><p>'+t[1]+'</p></div><div class="clk" id="clk"></div></div><div class="acon">'+adminHTML()+'</div></div></div>'}
 function tickClock(){const el=$('clk');if(!el)return;const d=new Date();el.innerHTML='<b>'+d.toLocaleTimeString('en-US')+'</b><span>'+d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>'}
-function render(){const a=$('app');if(!S.me||!user())return a.innerHTML=loginHTML();const u=user();
+function render(){const a=$('app');if(!S.me||!user()){document.body.classList.remove('cash');return a.innerHTML=loginHTML()}const u=user();document.body.classList.toggle('cash',u.role!=='admin');
   if(u.role==='admin'){const y=window.scrollY;a.innerHTML=adminShell(u);tickClock();window.scrollTo(0,y);return}
   const f=document.activeElement&&document.activeElement.id==='q';a.innerHTML=shell(u);paintMain();paintRail();paintStatus();if(f)$('q').focus()}
 
@@ -534,6 +596,73 @@ function loginHTML(){
   '<button class="go" onclick="login()">Log in</button><div class="err" id="le">'+esc(S.err)+'</div>'+
   '<div class="lnote">'+ico('shield',14)+' Private &mdash; staff accounts only</div></div>'+
   '<div class="fb f2"><i>'+ico('wifi',16)+'</i><div><b>Offline-ready</b><span>Syncs automatically</span></div></div></div></div></div>'}
+
+/* ===== v4: quantity-sold export, delivery receiving with unit cost + markup, richer inventory ===== */
+const csvCell=x=>{x=x==null?'':String(x);return /[",\n\r]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
+function dlCSV(name,head,rows){const blob=new Blob(['﻿'+[head.map(csvCell).join(',')].concat(rows.map(r=>r.map(csvCell).join(','))).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const RNG_LBL={today:'today',week:'last-7-days',month:'this-month',all:'all-time'};
+function rangeFrom(r){const t0=new Date().setHours(0,0,0,0),n=new Date();return r==='today'?t0:r==='week'?t0-6*864e5:r==='month'?new Date(n.getFullYear(),n.getMonth(),1).getTime():0}
+function soldMap(from){const m={};S.sales.forEach(s=>{if(s.ts<from)return;(s.items||[]).forEach(i=>{const k=i.id||i.name,r=m[k]||(m[k]={id:i.id,name:i.name,qty:0,amt:0,n:0});r.qty+=+i.qty||0;r.amt+=(+i.qty||0)*(+i.price||0);r.n++})});return m}
+function exportSold(){const rows=Object.values(soldMap(rangeFrom(S.range))).sort((a,b)=>b.qty-a.qty).map(r=>{const p=prod(r.id)||{};return [r.name,p.generic||'',p.category||'',p.barcode||'',r.qty,r.n,+r.amt.toFixed(2),p.stock==null?'':p.stock,p.cost||0,p.price==null?'':p.price]});
+  if(!rows.length){alert('No sales in this period.');return}
+  dlCSV('800plus-quantity-sold-'+(RNG_LBL[S.range]||'all-time')+'-'+new Date().toISOString().slice(0,10)+'.csv',['Product','Generic name','Category','Barcode','Quantity sold','No. of sales','Sales amount (before discount)','Current stock','Unit cost','Sale price'],rows)}
+
+/* ---- inventory table: cost, price, profit per unit + margin, status, movement (units sold in last 30 days) ---- */
+function invHTML(){return '<div class="card"><div class="tb"><input placeholder="Search name, generic, barcode…" value="'+esc(S.q)+'" oninput="S.q=this.value;$(\'it\').innerHTML=invRows()"><button onclick="exportInv()">⬇ Export CSV</button><button class="p" onclick="prodForm()">+ Add product</button></div>'+
+  (S.low?'<div class="chip">Low stock only <button onclick="S.low=false;render()" aria-label="Clear filter">✕</button></div>':'')+
+  '<div class="tbl"><table><tr><th>Product</th><th>Category</th><th>Supplier</th><th>Expiry</th><th class="r">Stock</th><th class="r">Cost</th><th class="r">Sell price</th><th class="r">Profit / margin</th><th>Status</th><th title="Units sold in the last 30 days: 10+ fast, 3–9 moderate, 1–2 slow">Movement (30d)</th><th></th></tr><tbody id="it">'+invRows()+'</tbody></table></div></div>'}
+function invRows(){const q=S.q.toLowerCase(),sm=soldMap(Date.now()-30*864e5);
+  return S.products.filter(p=>(!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q))&&(!S.low||p.stock<=(p.reorder||0))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
+    const out=p.stock<=0,low=!out&&p.stock<=(p.reorder||0),pu=p.cost>0?p.price-p.cost:null,mg=pu!=null&&p.price>0?pu/p.price*100:null,n30=(sm[p.id]||{}).qty||0,
+      mv=n30>=10?['Fast moving','f']:n30>=3?['Moderate','m']:n30>=1?['Slow','s']:['No sales','n'];
+    return '<tr><td><b>'+esc(p.name)+'</b>'+(p.rx?' <span class="tag r">Rx</span>':'')+'<div class="sm">'+esc(p.generic)+'</div>'+(p.barcode?'<span class="bcode">'+esc(p.barcode)+'</span>':'')+'</td><td>'+esc(p.category)+'</td><td>'+esc((S.suppliers.find(s=>s.id===p.supplier)||{}).name||'')+'</td><td>'+esc(p.expiry)+' '+expTag(p.expiry)+'</td>'+
+    '<td class="r'+(out||low?' neg':'')+'"><b>'+p.stock+'</b> pcs</td><td class="r">'+(p.cost>0?peso(p.cost):'<span class="sm">not set</span>')+'</td><td class="r"><b>'+peso(p.price)+'</b></td>'+
+    '<td class="r">'+(pu==null?'<span class="sm">—</span>':'<span class="'+(pu<0?'neg':'gain')+'">'+(pu<0?'−':'+')+peso(Math.abs(pu))+'</span><br><span class="mpill'+(mg<20?' lo':'')+'">'+mg.toFixed(1)+'% margin</span>')+'</td>'+
+    '<td><span class="sbadge '+(out?'out':low?'low':'in')+'">'+(out?'Out of stock':low?'Low stock':'In stock')+'</span></td><td><span class="mv '+mv[1]+'">'+mv[0]+'</span><div class="sm">'+n30+' sold</div></td>'+
+    '<td style="white-space:nowrap"><button onclick="prodForm(\''+p.id+'\')">Edit</button> <button class="x" onclick="del(\'products\',\''+p.id+'\')">✕</button></td></tr>'}).join('')||'<tr><td colspan="11" class="sm">No products found.</td></tr>'}
+
+/* ---- receive a delivery: quantity, unit cost, markup -> sale price ---- */
+const r2=n=>Math.round(n*100)/100;
+S.si={pid:'',sup:'',msg:'',f:null};
+TB.stockins[1]=r=>({id:r.id,ts:new Date(r.created_at).getTime(),name:r.name,qty:r.qty,cost:+r.unit_cost||0,sup:r.supplier_id});
+function stockHTML(){const rec=S.stockins.slice().sort((a,b)=>b.ts-a.ts),t0=new Date().setHours(0,0,0,0),td=rec.filter(s=>s.ts>=t0),spent=td.reduce((a,s)=>a+s.qty*(s.cost||0),0);
+  return '<div class="pos" style="grid-template-columns:1fr 1fr"><div class="card"><h3 style="margin-top:0;color:var(--red)">Receive delivery</h3><label>Supplier</label><select id="s4" onchange="S.si.sup=this.value"><option value="">—</option>'+S.suppliers.map(s=>'<option value="'+s.id+'"'+(s.id===S.si.sup?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select>'+
+  '<label>Find product — type the name or scan the barcode</label><input id="s0" autocomplete="off" placeholder="Search…" oninput="siFind()" onkeydown="if(event.key===\'Enter\')siEnter()"><div id="sres"></div><div id="sform">'+siFormHTML()+'</div>'+(S.si.msg?'<div class="okmsg">✔ '+esc(S.si.msg)+'</div>':'')+'</div>'+
+  '<div class="card"><h3 style="margin-top:0;color:var(--red)">Recent deliveries</h3><div class="sm" style="margin-bottom:8px">Today: '+td.length+' item'+(td.length===1?'':'s')+' received · '+peso(spent)+' at cost</div><div class="tbl"><table><tr><th>Product</th><th class="r">Qty</th><th class="r">Unit cost</th><th class="r">Total</th><th>Date</th></tr>'+
+  rec.slice(0,20).map(s=>'<tr><td>'+esc(s.name)+'</td><td class="r">+'+s.qty+'</td><td class="r">'+(s.cost>0?peso(s.cost):'<span class="sm">—</span>')+'</td><td class="r">'+(s.cost>0?peso(s.cost*s.qty):'<span class="sm">—</span>')+'</td><td class="sm">'+new Date(s.ts).toLocaleDateString()+'</td></tr>').join('')+'</table></div></div></div>'}
+function siFormHTML(){const p=prod(S.si.pid);if(!p)return '';
+  const f=S.si.f||(S.si.f={q:'',c:p.cost>0?String(p.cost):'',m:'',p:String(p.price),e:'',u:true});
+  if(f.m===''&&+f.c>0&&+f.p>0)f.m=(((+f.p-+f.c)/+f.c)*100).toFixed(1);
+  return '<div class="selp"><div><b>'+esc(p.name)+'</b><div class="sm">In stock: '+p.stock+' · current cost '+(p.cost>0?peso(p.cost):'not set')+' · current price '+peso(p.price)+'</div></div><button onclick="siClear()">Change</button></div>'+
+  '<div class="row2"><div><label>Quantity received</label><input id="s2" type="number" min="1" inputmode="numeric" value="'+esc(f.q)+'" oninput="siSave()"></div><div><label>Unit cost (₱) — what you paid per piece</label><input id="s5" type="number" min="0" step="0.01" inputmode="decimal" value="'+esc(f.c)+'" oninput="siCalc(\'c\')"></div>'+
+  '<div><label>Markup % on cost</label><input id="s6" type="number" min="0" step="0.1" inputmode="decimal" value="'+esc(f.m)+'" oninput="siCalc(\'m\')"></div><div><label>New sale price (₱)</label><input id="s7" type="number" min="0" step="0.01" inputmode="decimal" value="'+esc(f.p)+'" oninput="siCalc(\'p\')"></div></div>'+
+  '<div class="hint" id="shint"></div><div style="margin-top:6px"><button onclick="siRound()">Round price up to a whole peso</button></div><label>Batch expiry date</label><input id="s3" type="date" value="'+esc(f.e)+'" oninput="siSave()">'+
+  '<label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input id="s8" type="checkbox" style="width:auto" '+(f.u?'checked':'')+' onchange="siSave()"> Update this product’s unit cost and sale price</label><div style="margin-top:12px"><button class="p" onclick="doStockIn()">Add to inventory</button></div><div class="err" id="se"></div>'}
+function siSave(){if(!$('s2'))return;S.si.f={q:v('s2'),c:v('s5'),m:v('s6'),p:v('s7'),e:v('s3'),u:$('s8').checked};
+  const c=parseFloat(v('s5')),pr=parseFloat(v('s7')),q=parseInt(v('s2')),h=$('shint');if(!h)return;
+  h.innerHTML=c>0&&pr>=0?(pr<c?'<span class="neg">Selling below cost!</span> ':'')+'Profit per piece: <b>'+peso(pr-c)+'</b> · markup '+((pr-c)/c*100).toFixed(1)+'% · margin '+(pr>0?((pr-c)/pr*100).toFixed(1):'0')+'%'+(q>0?'<br>This delivery costs '+peso(q*c)+' and sells for '+peso(q*pr):''):''}
+function siCalc(src){const c=parseFloat(v('s5')),m=parseFloat(v('s6')),pr=parseFloat(v('s7'));
+  if(src==='c'){if(c>0&&!isNaN(m))$('s7').value=r2(c*(1+m/100));else if(c>0&&pr>=0)$('s6').value=((pr-c)/c*100).toFixed(1)}
+  else if(src==='m'){if(c>0&&!isNaN(m))$('s7').value=r2(c*(1+m/100))}
+  else if(c>0&&pr>=0)$('s6').value=((pr-c)/c*100).toFixed(1);
+  siSave()}
+function siRound(){const pr=parseFloat(v('s7'));if(!(pr>=0))return;$('s7').value=Math.ceil(pr-1e-9);siCalc('p')}
+function siFind(){const q=v('s0').trim().toLowerCase(),el=$('sres');if(!q){el.innerHTML='';return}
+  const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q)).slice(0,8);
+  el.innerHTML=l.length?l.map(p=>'<button class="sr" onclick="siPick(\''+p.id+'\')"><span>'+esc(p.name)+'</span><span class="sm">'+esc(p.barcode||'')+' · stock '+p.stock+'</span></button>').join(''):'<div class="sm" style="margin-top:6px">No match. Add the product in Inventory first.</div>'}
+function siEnter(){const q=v('s0').trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>p.barcode&&p.barcode.toLowerCase()===q);if(!m.length){const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q));if(l.length===1)m=l}if(m.length)siPick(m[0].id)}
+function siPick(id){S.si.pid=id;S.si.f=null;S.si.msg='';$('sres').innerHTML='';$('s0').value='';$('sform').innerHTML=siFormHTML();siSave();$('s2').focus()}
+function siClear(){S.si.pid='';S.si.f=null;$('sform').innerHTML='';$('s0').focus()}
+async function doStockIn(){const p=prod(S.si.pid),e=$('se'),q=parseInt(v('s2')),c=v('s5')===''?null:parseFloat(v('s5')),pr=v('s7')===''?null:parseFloat(v('s7')),upd=$('s8').checked;
+  if(!p||!(q>0)){e.textContent='Enter the quantity received.';return}
+  if(c!==null&&!(c>=0)){e.textContent='Unit cost must be 0 or more.';return}
+  if(upd&&pr!==null&&!(pr>=0)){e.textContent='Sale price must be 0 or more.';return}
+  if(upd&&c!==null&&pr!==null&&pr<c&&!confirm('Sale price is lower than the unit cost. Save anyway?'))return;
+  const {error}=await sb.rpc('stock_in',{pid:p.id,qty:q,exp:v('s3')||null,sup:v('s4')||null,ucost:c,newprice:pr,upd});
+  if(error){e.textContent=/could not find|schema cache/i.test(error.message)?'The database needs the stock-in-cost.sql update first (see README).':error.message;return}
+  S.si={pid:'',sup:v('s4'),msg:'Added '+q+' × '+p.name+(c!==null?' at '+peso(c)+' each':''),f:null};
+  await Promise.all(['products','stockins'].map(load));render();const s0=$('s0');if(s0)s0.focus()}
 
 init();
 </script></body></html>
