@@ -27,3 +27,9 @@ The Project URL and publishable key are already set near the end of index.html (
 - Offline stock numbers can be old; two offline computers can sell the same last item. It is recorded and flagged for the admin.
 - Offline sales use the prices the computer last saw. Admin tasks (products, stock in, users, reports) need internet.
 - Discount amounts are worked out in the cashier's browser, as before; review discounts in Reports.
+
+## Delivery receiving, cost and quantity-sold export (v4)
+- Run stock-in-cost.sql once in Supabase > SQL Editor (after migration.sql). Until then, Stock in shows "needs the stock-in-cost.sql update".
+- Admin > Stock in > Receive delivery: find the product (name or barcode), enter quantity received and unit cost, then either a markup % or a sale price (the other fills in). "Update this product's unit cost and sale price" saves both to the product.
+- Admin > Reports > pick a period > Export quantity sold: CSV (opens in Excel / Google Sheets) with quantity sold, number of sales and sales amount per product.
+- Inventory now shows profit per unit, margin, stock status and movement (units sold in the last 30 days: 10+ fast, 3-9 moderate, 1-2 slow).
