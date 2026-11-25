@@ -33,3 +33,16 @@ The Project URL and publishable key are already set near the end of index.html (
 - Admin > Stock in > Receive delivery: find the product (name or barcode), enter quantity received and unit cost, then either a markup % or a sale price (the other fills in). "Update this product's unit cost and sale price" saves both to the product.
 - Admin > Reports > pick a period > Export quantity sold: CSV (opens in Excel / Google Sheets) with quantity sold, number of sales and sales amount per product.
 - Inventory now shows profit per unit, margin, stock status and movement (units sold in the last 30 days: 10+ fast, 3-9 moderate, 1-2 slow).
+
+## v5: inventory redesign + print receipt
+- Admin > Inventory now has stat cards, status filter pills (All/Expired/Critical/Low/In Stock), category/supplier/movement filters, rows-per-page, paging, and view/edit/delete icon buttons. Same red and gold theme.
+- After Process Sale the receipt shows a "Sale confirmed" banner with a Print receipt button (prints an 80mm slip) and New sale.
+- Status rules: Expired = past expiry; Out of stock = 0; Critical = at or below half the reorder level; Low = at or below the reorder level.
+- No Batch or Location columns: products do not store those yet.
+
+## v6: Purchase Orders
+- Run purchase-orders.sql once in Supabase > SQL Editor (after stock-in-cost.sql). Until then the Purchase Orders page shows a "needs a database update" message.
+- Admin > Purchase Orders > + New Purchase Order: pick the supplier, add products (search by name or barcode, or "Add low-stock items"), set quantity and unit cost, save. Order numbers look like PO-261125-001.
+- Print: the Print button makes an A4 purchase order with a signature line, to give or send to the supplier.
+- Receive delivery (from the PO): enter the quantity that arrived, the unit cost, and the markup % (or the sale price). Partial deliveries are fine: the order becomes "Partly received" until everything arrives. Each item goes through the same stock-in as Stock in, so inventory, unit cost and sale price update.
+- Only admins can see or change purchase orders.
