@@ -1002,4 +1002,66 @@ function qty(id,d){
 function clearSale(){S.cart=[];S.dm='percent';S.dval='';S.cash='';S.rxok=false;S.idn='';S.pm='prod'}
 function resume(i){if(S.cart.length){alert('Hold or clear the current sale first.');return}const h=S.held.splice(i,1)[0];Object.assign(S,{cart:h.cart,dm:h.dm,dval:h.dval,idn:h.idn,pm:'cart'});closeModal();render()}
 </script>
+<script id="v8js">
+/* ===== v8: void a sale (admin only, whole sale). Voided sales stay on record, stock goes back ===== */
+S.voided=[];
+(function(){const t=TB.sales[1];TB.sales[1]=r=>Object.assign(t(r),{voided:!!r.voided_at,voidedAt:r.voided_at?new Date(r.voided_at).getTime():0,voidedBy:r.voided_by||'',voidReason:r.void_reason||''})})();
+function splitVoided(){S.voided=S.sales.filter(s=>s.voided).sort((a,b)=>b.voidedAt-a.voidedAt);S.sales=S.sales.filter(s=>!s.voided)}
+const _load0=load;
+load=async function(n){const r=await _load0(n);if(n==='sales')splitVoided();return r};
+splitVoided();
+function openRcp(id){
+  const s=S.sales.find(x=>x.id===id)||S.voided.find(x=>x.id===id);if(!s)return;
+  receipt(s,id,true);
+  const rb=document.querySelector('#modal .rcb'),rc=document.querySelector('#modal .rc');
+  if(s.voided){
+    if(rc)rc.insertAdjacentHTML('afterbegin','<div style="text-align:center;font-weight:800;border:2px solid #000;margin-bottom:6px">*** VOIDED ***</div>');
+    if(rb)rb.insertAdjacentHTML('beforebegin','<div class="noprint okh" style="background:#b3121b18;border-color:#b3121b55"><div><b style="color:var(--red)">VOIDED</b><div class="sm">By '+esc(s.voidedBy)+' · '+new Date(s.voidedAt).toLocaleString()+(s.voidReason?' · '+esc(s.voidReason):'')+'</div></div></div>')}
+  else if(isAdmin()&&!s.pending&&rb)rb.insertAdjacentHTML('beforeend','<button class="x" onclick="voidAsk(\''+id+'\')">Void sale</button>')}
+function voidAsk(id){
+  const s=S.sales.find(x=>x.id===id);if(!s)return;const n=(s.items||[]).reduce((a,i)=>a+(+i.qty||0),0);
+  modal('<h3 style="margin-top:0;color:var(--red)">Void this sale?</h3><p class="sm">'+rcp(s)+' · '+peso(s.total)+' · '+n+' item'+(n===1?'':'s')+'. The items go back into stock and the sale is taken out of the reports. It stays listed under “Voided sales”. This cannot be undone.</p>'+
+  '<label>Reason</label><select id="vr"><option>Wrong item</option><option>Customer changed mind</option><option>Cashier error</option><option>Other</option></select><input id="vo" placeholder="Details (optional)" style="margin-top:8px">'+
+  '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Keep sale</button><button class="x" style="flex:1" id="vbtn" onclick="voidDo(\''+id+'\')">Void sale</button></div><div class="err" id="ve"></div>')}
+async function voidDo(id){
+  const b=$('vbtn');b.disabled=true;const d=v('vo').trim(),reason=v('vr')+(d?': '+d:'');
+  const {error}=await sb.rpc('void_sale',{sid:String(id),reason});
+  if(error){b.disabled=false;$('ve').textContent=/could not find|schema cache/i.test(error.message)?'The database needs void-sales.sql first (see README).':error.message;return}
+  await Promise.all(['sales','products'].map(load));closeModal();render()}
+function voidedHTML(){
+  if(!S.voided.length)return '';
+  return '<div class="card" style="margin-top:14px"><h3 style="margin-top:0">Voided sales ('+S.voided.length+')</h3><div class="tbl"><table><tr><th>Receipt</th><th>Sold</th><th>Cashier</th><th class="r">Total</th><th>Voided by</th><th>When</th><th>Reason</th><th></th></tr>'+
+  S.voided.slice(0,50).map(s=>'<tr><td>'+rcp(s)+'</td><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td class="r">'+peso(s.total)+'</td><td>'+esc(s.voidedBy)+'</td><td>'+new Date(s.voidedAt).toLocaleString()+'</td><td>'+esc(s.voidReason)+'</td><td><button onclick="openRcp(\''+s.id+'\')">View</button></td></tr>').join('')+'</table></div></div>'}
+(function(){const r=repHTML;repHTML=function(){return r()+voidedHTML()}})();
+</script>
+<script id="v9js">
+/* ===== v9: receipt layout copied from the Umbrella Pharmacy receipt (name + address are the only changes) ===== */
+const STORE={name:'800+ PHARMACY',addr:''};   // <- put the store address here, e.g. 'Street, City, Philippines'
+function receipt(s,id,hist){
+  const dash='<div style="border-top:1px dashed #555;margin:7px 0"></div>',
+        row=(l,r,b)=>'<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline'+(b?';font-weight:800':'')+'"><span>'+l+'</span><span>'+r+'</span></div>',
+        n=(s.items||[]).reduce((a,i)=>a+(+i.qty||0),0),d=new Date(s.ts),
+        dl=s.discType==='senior'?'Senior discount (ID '+esc(s.idNo)+')':s.discType==='pwd'?'PWD discount (ID '+esc(s.idNo)+')':s.discType==='percent'?'Discount ('+esc(s.discVal)+'%)':'Discount',
+        pay={cash:'Cash',gcash:'GCash',card:'Card'}[s.pay]||esc(s.pay);
+  modal((hist?'':'<div class="noprint okh"><span class="okc">✓</span><div><b>Sale confirmed</b><div class="sm">Total '+peso(s.total)+(s.change>0?' · Change '+peso(s.change):'')+'</div></div></div>')+
+  '<div class="rc" style="font:12.5px/1.35 Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:16px 14px;border-radius:10px">'+
+  '<div style="text-align:center;font-size:19px;font-weight:900;letter-spacing:.01em">'+esc(STORE.name)+'</div>'+
+  (STORE.addr?'<div style="text-align:center;font-size:10.5px;color:#555;margin:2px 0 8px">'+esc(STORE.addr)+'</div>':'<div style="height:8px"></div>')+
+  '<div style="display:flex;justify-content:space-between;font-size:11px;color:#444"><span>'+d.toLocaleDateString('en-US')+'</span><span>'+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+  '<div style="text-align:center;font-size:11px;color:#444;margin:6px 0">Receipt#: '+rcp(s)+'</div>'+
+  (hist?'<div style="text-align:center;font-weight:800;font-size:11px">*** REPRINT ***</div>':'')+dash+
+  (s.items||[]).map(i=>'<div style="font-weight:700">'+i.qty+' '+esc(i.name)+'</div><div style="font-size:10.5px;color:#444">'+peso(i.price)+'</div><div style="text-align:right;font-weight:700;margin-bottom:4px">'+peso(i.qty*i.price)+'</div>').join('')+dash+
+  row('<span style="font-size:11px">subtotal</span>',peso(s.subtotal))+
+  (s.discount?row('<span style="font-size:11px">'+dl+'</span>','−'+peso(s.discount)):'')+dash+
+  row('amount to pay',peso(s.total),1)+dash+
+  '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><span style="font-size:10.5px;color:#444">Paid: '+pay+' ('+peso(s.cash)+')</span><b>Change: '+peso(s.change)+'</b></div>'+
+  '<div style="font-weight:800;margin-top:5px">Number of items sold = '+n+'</div>'+dash+
+  '<div style="text-align:center;font-weight:900;font-size:13px">THANK YOU COME AGAIN!</div>'+
+  '<div style="text-align:center;font-size:9.5px;color:#555;margin-top:5px">For any concerns on our products and services, please ask our Store Manager to replace/exchange merchandise. Present this receipt.</div>'+
+  '<div style="text-align:center;font-size:9px;font-weight:800;margin-top:5px">THIS IS NOT VALID FOR INPUT TAXES. ASK CASHIER FOR OR/SI.</div></div>'+
+  '<div class="noprint rcb"><button class="g" onclick="printRcp()">🖨 Print receipt</button><button class="p" onclick="closeModal();render()">'+(hist?'Close':'New sale')+'</button></div>')}
+function printRcp(){
+  const el=document.querySelector('#modal .rc');if(!el){window.print();return}
+  printDoc('Receipt',el.outerHTML,'@page{size:80mm auto;margin:3mm}body{margin:0;width:74mm;font:12px Arial,Helvetica,sans-serif;color:#000}.rc{padding:0!important;border-radius:0!important}')}
+</script>
 </body></html>
