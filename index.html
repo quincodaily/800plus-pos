@@ -362,22 +362,23 @@ async function init(){render();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   addEventListener('online',()=>flush().then(reloadAll));addEventListener('offline',paintStatus);setInterval(flush,30000);
-  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&S.me){S.me=null;render()}});
+  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&S.me){try{sessionStorage.removeItem('pos_tab')}catch(e){}S.me=null;render()}});
   const {data}=await sb.auth.getSession();
   if(data&&data.session){
     /* opening or refreshing the page always starts at the sign-in screen, except when offline or sales are still waiting to sync (the saved login is needed to send them) */
-    if(navigator.onLine&&!LS.get('pos_q',[]).length){try{await sb.auth.signOut()}catch(e){}render()}
+    let tabOk=false;try{tabOk=!!sessionStorage.getItem('pos_tab')}catch(e){}
+    if(!tabOk&&navigator.onLine&&!LS.get('pos_q',[]).length){try{await sb.auth.signOut()}catch(e){}render()}
     else await start(data.session.user.id)}}
 async function start(uid){S.uid=uid;await load('users');let me=S.users.find(u=>u.id===uid),why='';
   if(!me){const r=await sb.from('profiles').select('*').eq('id',uid).maybeSingle();if(r.error)why=' [DB error: '+r.error.message+' / '+(r.error.code||'')+']';else if(!r.data)why=' [no profile row for auth id '+uid+']';else{me=r.data;if(!S.users.some(u=>u.id===uid))S.users.push(me)}}
   if(!me||me.active===false){S.err='This account has no POS profile or is disabled. Ask the admin.'+why+(me&&me.active===false?' [active=false]':'');if(navigator.onLine)await sb.auth.signOut().catch(()=>{});S.uid=null;return render()}
-  S.me=me.username;await Promise.all(['products','suppliers','sales'].concat(me.role==='admin'?['stockins']:[]).map(load));S.ok=1;subscribe();render();flush()}
+  S.me=me.username;try{sessionStorage.setItem('pos_tab','1')}catch(e){}await Promise.all(['products','suppliers','sales'].concat(me.role==='admin'?['stockins']:[]).map(load));S.ok=1;subscribe();render();flush()}
 async function login(){const u=v('lu').trim().toLowerCase(),e=$('le');e.textContent='Signing in\u2026';
   const {data,error}=await sb.auth.signInWithPassword({email:u+'@800plus.pos',password:v('lp')});
   if(error){e.textContent=navigator.onLine?('Sign-in failed: '+(error.message||'unknown')+' (status '+(error.status||'none')+', code '+(error.code||'none')+')'):'You need internet to sign in.';console.error(error);return}
   S.tab='dash';S.cart=[];S.err='';await start(data.user.id)}
 async function logout(){if(LS.get('pos_q',[]).length){alert('Some sales are still waiting to sync. Connect to the internet and wait until they are synced before logging out.');return}
-  try{await sb.auth.signOut()}catch(e){}S.me=null;S.uid=null;S.cart=[];render()}
+  try{await sb.auth.signOut()}catch(e){}try{sessionStorage.removeItem('pos_tab')}catch(e){}S.me=null;S.uid=null;S.cart=[];render()}
 /* ---- sales: saved on this computer first, then sent; safe to retry ---- */
 const netErr=e=>!e.code||/fetch|network|timeout/i.test(e.message||'')||e.code==='PGRST301'||e.code==='PGRST303'||e.status===401;
 async function flush(){if(S.flushing||!S.uid||!navigator.onLine)return;S.flushing=1;let did=0;
@@ -955,5 +956,50 @@ async function finishRecv(){
     if(st!==po.status)await sb.from('purchase_orders').update({status:st,received_at:all?new Date().toISOString():null}).eq('id',po.id);
     await poLoad()}
   await Promise.all(['products','stockins'].map(load));if(S.tab==='po')render()}
+</script>
+<style id="v7css">
+body.cash .ctb{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+body.cash .ctb .tbl{overflow-x:auto}body.cash .ctb table{min-width:560px}
+body.cash .ctb th{padding:12px 14px;color:var(--mut);white-space:nowrap}
+body.cash .ctb td{padding:12px 14px;border-bottom:1px solid var(--bd);vertical-align:middle}
+body.cash .ctb tr:last-child td{border-bottom:0}
+body.cash .ctb .bcd{font:11px ui-monospace,Menlo,monospace;color:var(--mut)}
+body.cash .qs{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--bd);border-radius:10px;padding:2px}
+body.cash .qs button{width:34px;height:34px;padding:0;border:0;background:transparent;font-size:18px;border-radius:8px}
+body.cash .qs span{min-width:30px;text-align:center;font-weight:700}
+body.cash .ctb .del{width:34px;height:34px;padding:0;border-radius:9px;color:var(--red)}
+body.cash .cemp{padding:46px 16px;text-align:center;color:var(--mut)}
+body.cash .cemp b{display:block;color:var(--tx);font-size:16px;margin-bottom:4px}
+body.cash .cemp button{margin-top:14px}
+body.cash .cbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--bd);font-size:13px;color:var(--mut);flex-wrap:wrap}
+</style>
+<script id="v7js">
+/* ===== v7: cashier — adding a product hides the product tiles and shows the cart; ☰ = cart, ▦ = products ===== */
+S.pm='prod';
+function cartTable(){
+  const L=S.cart.map(c=>({c,p:prod(c.id)})).filter(x=>x.p);
+  if(!L.length)return '<div class="ctb"><div class="cemp"><b>Cart is empty</b>Scan a barcode or search a product name above.<br><button class="p" onclick="setView(\'grid\')">Browse products</button></div></div>';
+  const n=L.reduce((a,x)=>a+x.c.qty,0),sub=L.reduce((a,x)=>a+x.p.price*x.c.qty,0);
+  return '<div class="ctb"><div class="tbl"><table><thead><tr><th>Barcode</th><th>Product</th><th>Qty</th><th class="r">Price</th><th class="r">Subtotal</th><th></th></tr></thead><tbody>'+
+  L.map(({c,p})=>'<tr><td><span class="bcd">'+esc(p.barcode||'—')+'</span></td><td><b>'+esc(p.name)+'</b>'+(p.rx?' <span class="tag r">Rx</span>':'')+(p.generic?'<div class="sm">Generic: '+esc(p.generic)+'</div>':'')+'</td>'+
+   '<td><div class="qs"><button onclick="qty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="qty(\''+c.id+'\',1)" '+(c.qty>=p.stock?'disabled':'')+'>+</button></div></td>'+
+   '<td class="r">'+peso(p.price)+'</td><td class="r"><b>'+peso(p.price*c.qty)+'</b></td><td><button class="x del" onclick="qty(\''+c.id+'\',-99)" title="Remove">🗑</button></td></tr>').join('')+
+  '</tbody></table></div><div class="cbar"><button onclick="setView(\'grid\')">＋ Add more products</button><span><b>'+n+'</b> item'+(n===1?'':'s')+' · <b style="color:var(--red)">'+peso(sub)+'</b></span></div></div>'}
+function paintMain(){
+  S.cart=S.cart.filter(c=>prod(c.id));const el=$('pm');if(!el)return;
+  if(S.q.trim())S.pm='prod';
+  const vl=$('vl'),vg=$('vg');if(vl)vl.classList.toggle('on',S.pm==='cart');if(vg)vg.classList.toggle('on',S.pm!=='cart');
+  el.innerHTML=S.pm==='cart'?cartTable():'<div class="grid pg">'+gridHTML()+'</div>'}
+function setView(v){S.pm=v==='list'?'cart':'prod';paintMain()}
+function addCart(id){
+  const p=prod(id),c=S.cart.find(x=>x.id===id);
+  if(c){if(c.qty<p.stock)c.qty++}else S.cart.push({id,qty:1});
+  S.q='';const q=$('q');if(q)q.value='';S.pm='cart';paintMain();paintRail()}
+function qty(id,d){
+  const c=S.cart.find(x=>x.id===id),p=prod(id);if(!c||!p)return;
+  c.qty=Math.max(0,Math.min(p.stock,c.qty+d));S.cart=S.cart.filter(x=>x.qty>0);
+  if(!S.cart.length)S.pm='prod';paintMain();paintRail()}
+function clearSale(){S.cart=[];S.dm='percent';S.dval='';S.cash='';S.rxok=false;S.idn='';S.pm='prod'}
+function resume(i){if(S.cart.length){alert('Hold or clear the current sale first.');return}const h=S.held.splice(i,1)[0];Object.assign(S,{cart:h.cart,dm:h.dm,dval:h.dval,idn:h.idn,pm:'cart'});closeModal();render()}
 </script>
 </body></html>
