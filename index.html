@@ -285,7 +285,7 @@ function repHTML(){const t0=new Date().setHours(0,0,0,0),from=rangeFrom(S.range)
   const tp=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5);
   return '<div class="card"><select style="width:auto" onchange="S.range=this.value;render()"><option value="today">Today</option><option value="week"'+(S.range==='week'?' selected':'')+'>Last 7 days</option><option value="month"'+(S.range==='month'?' selected':'')+'>This month</option><option value="all"'+(S.range==='all'?' selected':'')+'>All time</option></select> <button onclick="exportSold()">\u2b07 Export quantity sold</button><div class="stats" style="margin-top:12px"><div class="card stat"><span class="sm">Revenue</span><b>'+peso(l.reduce((a,s)=>a+s.total,0))+'</b></div><div class="card stat"><span class="sm">Profit</span><b>'+peso(l.reduce((a,x)=>a+x.total-(x.cost||0),0))+'</b></div><div class="card stat"><span class="sm">Transactions</span><b>'+l.length+'</b></div><div class="card stat"><span class="sm">Discounts given</span><b>'+peso(l.reduce((a,s)=>a+s.discount,0))+'</b></div></div><div class="pos" style="grid-template-columns:1fr 1fr"><div><b>By cashier</b><table>'+Object.entries(by).map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+peso(e[1])+'</td></tr>').join('')+'</table></div><div><b>Top sellers</b><table>'+tp.map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+e[1]+' sold</td></tr>').join('')+'</table></div></div><b>Sales log</b><div class="tbl"><table><tr><th>Time</th><th>Cashier</th><th>Items</th><th>Total</th></tr>'+l.slice(0,100).map(s=>'<tr><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td>'+s.items.map(i=>i.qty+'× '+esc(i.name)).join(', ')+(s.discount?' <span class="tag">'+esc(s.discType)+'</span>':'')+(s.oversold?' <span class="tag r">OVERSOLD</span>':'')+(s.offline?' <span class="tag w">offline</span>':'')+'</td><td>'+peso(s.total)+'</td></tr>').join('')+'</table></div></div>'}
 function usrHTML(){return '<div class="card"><button class="p" onclick="usrForm()">+ Add account</button><div class="tbl" style="margin-top:10px"><table><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr>'+S.users.map(u=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td style="white-space:nowrap"><button onclick="usrForm(\''+u.id+'\')">Edit</button> '+(u.username!==S.me?'<button class="x" onclick="del(\'users\',\''+u.id+'\')">✕</button>':'')+'</td></tr>').join('')+'</table></div></div>'}
-function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier"'+(u.role==='cashier'?' selected':'')+'>Cashier</option><option value="salesrep"'+(u.role==='salesrep'?' selected':'')+'>Sales rep</option><option value="warehouse"'+(u.role==='warehouse'?' selected':'')+'>Warehouse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
+function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier"'+(u.role==='cashier'?' selected':'')+'>Cashier</option><option value="salesrep"'+(u.role==='salesrep'?' selected':'')+'>Sales rep</option><option value="warehouse"'+(u.role==='warehouse'?' selected':'')+'>Warehouse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select>'+mgrPinSection(id,u)+'<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
 async function saveUsr(id){const un=v('u2').trim().toLowerCase();if(!un||!v('u3')){$('ue').textContent='Username and password are required.';return}
   if(!id&&S.users.some(x=>x.username===un)){$('ue').textContent='Username already taken.';return}
   const d={name:v('u1').trim()||un,username:un,password:v('u3'),role:v('u4')};
@@ -333,7 +333,7 @@ async function checkout(){const t=calc(),e=$('ce'),sp=S.dm==='senior'||S.dm==='p
   if(sp&&!S.idn.trim()){e.textContent='Enter the discount ID number.';return}
   if(!(cash>=t.tot)){e.textContent='Amount received is less than the total.';return}
   for(const c of S.cart){const p=prod(c.id);if(!p||p.stock<c.qty||days(p.expiry)<0){e.textContent='Stock or expiry problem with '+(p?p.name:'an item')+'.';return}}
-  const s={ts:Date.now(),cashier:S.me,items:S.cart.map(c=>({id:c.id,name:prod(c.id).name,qty:c.qty,price:prod(c.id).price})),subtotal:t.sub,discType:t.disc?S.dm:'none',idNo:sp?S.idn:'',discVal:S.dval,discount:t.disc,total:t.tot,pay:S.pay,cash,change:cash-t.tot,rx:t.rx};
+  const s={ts:Date.now(),cashier:S.me,items:S.cart.map(c=>({id:c.id,name:prod(c.id).name,qty:c.qty,price:prod(c.id).price})),subtotal:t.sub,discType:t.disc?S.dm:'none',idNo:(sp||S.saleType)?S.idn:'',discVal:S.dval,discount:t.disc,total:t.tot,pay:S.pay,cash,change:cash-t.tot,rx:t.rx};
   try{for(const c of S.cart)await db.collection('products').doc(c.id).update({stock:prod(c.id).stock-c.qty});const r=await db.collection('sales').add(s);clearSale();receipt(s,r.id)}catch(x){e.textContent='Could not save sale: '+(x.message||x.code)}}
 function receipt(s,id){const dl=s.discType==='senior'?'Senior discount (ID '+esc(s.idNo)+')':s.discType==='pwd'?'PWD discount (ID '+esc(s.idNo)+')':s.discType==='percent'?'Discount ('+esc(s.discVal)+'%)':'Discount';
   modal('<div class="rc"><div style="text-align:center"><b style="font-size:17px">800+ PHARMACY</b><br>Official Receipt<br>'+new Date(s.ts).toLocaleString()+'<br>Cashier: '+esc(s.cashier)+'<br>#'+esc(String(id).slice(0,8))+'</div><hr>'+s.items.map(i=>'<div class="tot"><span>'+i.qty+' × '+esc(i.name)+'</span><span>'+peso(i.qty*i.price)+'</span></div>').join('')+'<hr><div class="tot"><span>Subtotal</span><span>'+peso(s.subtotal)+'</span></div>'+(s.discount?'<div class="tot"><span>'+dl+'</span><span>−'+peso(s.discount)+'</span></div>':'')+'<div class="tot"><b>TOTAL</b><b>'+peso(s.total)+'</b></div><div class="tot"><span>Paid ('+esc(s.pay)+')</span><span>'+peso(s.cash)+'</span></div><div class="tot"><span>Change</span><span>'+peso(s.change)+'</span></div><hr><div style="text-align:center">Thank you!</div></div><div class="noprint" style="display:flex;gap:8px;margin-top:14px"><button class="g" onclick="window.print()">Print</button><button class="p" onclick="closeModal();render()">New sale</button></div>')}
@@ -394,7 +394,7 @@ async function checkout(){const t=calc(),e=$('ce'),sp=S.dm==='senior'||S.dm==='p
   if(sp&&!S.idn.trim()){e.textContent='Enter the discount ID number.';return}
   if(!(cash>=t.tot)){e.textContent='Amount received is less than the total.';return}
   for(const c of S.cart){const p=prod(c.id);if(!p||days(p.expiry)<0){e.textContent='Expiry problem with '+(p?p.name:'an item')+'.';return}if(navigator.onLine&&p.stock<c.qty){e.textContent='Not enough stock: '+p.name;return}}
-  const s={id:crypto.randomUUID(),ts:Date.now(),cashier:S.me,items:S.cart.map(c=>({id:c.id,name:prod(c.id).name,qty:c.qty,price:prod(c.id).price})),subtotal:t.sub,discType:t.disc?S.dm:'none',discVal:S.dval,idNo:sp?S.idn:'',discount:t.disc,total:t.tot,pay:S.pay,cash,change:cash-t.tot,rx:t.rx,offline:!navigator.onLine};
+  const s={id:crypto.randomUUID(),ts:Date.now(),cashier:S.me,items:S.cart.map(c=>({id:c.id,name:prod(c.id).name,qty:c.qty,price:prod(c.id).price})),subtotal:t.sub,discType:t.disc?S.dm:'none',discVal:S.dval,idNo:(sp||S.saleType)?S.idn:'',discount:t.disc,total:t.tot,pay:S.pay,cash,change:cash-t.tot,rx:t.rx,offline:!navigator.onLine};
   const q=LS.get('pos_q',[]);q.push(s);if(!LS.set('pos_q',q)){e.textContent='This computer cannot save the sale (storage full or blocked). Sale NOT recorded.';return}
   await flush();
   const bad=LS.get('pos_f',[]).find(x=>x.s.id===s.id);
@@ -1042,7 +1042,7 @@ function receipt(s,id,hist){
   const dash='<div style="border-top:2px dashed #000;margin:10px 0"></div>',
         row=(l,r,b)=>'<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline'+(b?';font-weight:800':'')+'"><span>'+l+'</span><span>'+r+'</span></div>',
         n=(s.items||[]).reduce((a,i)=>a+(+i.qty||0),0),d=new Date(s.ts),
-        dl=s.discType==='senior'?'Senior discount (ID '+esc(s.idNo)+')':s.discType==='pwd'?'PWD discount (ID '+esc(s.idNo)+')':s.discType==='percent'?'Discount ('+esc(s.discVal)+'%)':'Discount',
+        dl=s.discType==='senior'?'Senior discount (ID '+esc(s.idNo)+')':s.discType==='pwd'?'PWD discount (ID '+esc(s.idNo)+')':s.discType==='percent'?((saleTag(s)?saleTag(s).label+' discount (':'Discount (')+esc(s.discVal)+'%)'):'Discount',
         pay={cash:'Cash',gcash:'GCash',card:'Card'}[s.pay]||esc(s.pay);
   modal((hist?'':'<div class="noprint okh"><span class="okc">✓</span><div><b>Sale confirmed</b><div class="sm">Total '+peso(s.total)+(s.change>0?' · Change '+peso(s.change):'')+'</div></div></div>')+
   '<div class="rc" style="font:600 13.5px/1.5 Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:18px 14px 22px;border-radius:10px">'+
@@ -1050,7 +1050,7 @@ function receipt(s,id,hist){
   (STORE.addr?'<div style="text-align:center;font-size:12px;font-weight:600;color:#000;margin:3px 0 10px">'+esc(STORE.addr)+'</div>':'<div style="height:8px"></div>')+
   '<div style="display:flex;justify-content:space-between;font-size:12.5px;color:#000"><span>'+d.toLocaleDateString('en-US')+'</span><span>'+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
   '<div style="text-align:center;font-size:12.5px;color:#000;margin:6px 0">Receipt#: '+rcp(s)+'</div>'+
-  (hist?'<div style="text-align:center;font-weight:800;font-size:12.5px">*** REPRINT ***</div>':'')+dash+
+  (saleTag(s)?'<div style="text-align:center;font-weight:800;font-size:12.5px;margin:4px 0">'+saleTag(s).label.toUpperCase()+' - '+esc(saleTag(s).name)+'</div>':'')+(hist?'<div style="text-align:center;font-weight:800;font-size:12.5px">*** REPRINT ***</div>':'')+dash+
   (s.items||[]).map(i=>'<div style="font-weight:700">'+i.qty+' '+esc(i.name)+'</div><div style="font-size:12px;color:#000">'+peso(i.price)+'</div><div style="text-align:right;font-weight:700;margin-bottom:8px">'+peso(i.qty*i.price)+'</div>').join('')+dash+
   row('<span style="font-size:12.5px">subtotal</span>',peso(s.subtotal))+
   (s.discount?row('<span style="font-size:12.5px">'+dl+'</span>','−'+peso(s.discount)):'')+dash+
@@ -1356,7 +1356,7 @@ async function repLoad(id){
   const miss=[];S.cart=[];
   (o.items||[]).forEach(i=>{const p=prod(i.id);if(!p){miss.push(i.name+' (not found)');return}const q=Math.min(i.qty,p.stock);if(q<i.qty)miss.push(i.name+' (only '+p.stock+' in stock)');if(q>0)S.cart.push({id:i.id,qty:q})});
   if(!S.cart.length){rpcR('release_rep_order',{oid:id}).then(loadRep).catch(()=>{});alert('None of the items could be loaded:\n'+miss.join('\n'));return}
-  S.dm=o.dm||'percent';S.dval=o.dval||'';S.idn=o.idn||'';S.rxok=false;S.cash='';S.repLoaded=id;S.pm='cart';
+  S.dm=o.dm||'percent';S.dval=o.dval||'';S.idn=o.idn||'';S.saleType=saleTypeOf(S.idn);S.discOK=!!(S.dval||S.dm==='senior'||S.dm==='pwd');S.rxok=false;S.cash='';S.repLoaded=id;S.pm='cart';
   S.rep=S.rep.filter(x=>x.id!==id);closeModal();repPopups();render();
   if(miss.length)alert('Some items could not be loaded fully:\n'+miss.join('\n'))}
 function repList(){
@@ -1451,5 +1451,101 @@ function stockHTML(){
   '</tbody></table></div></div>'+
   '<div class="card" style="margin-top:14px"><h3 style="margin-top:0;color:var(--red)">Recently received</h3><div class="sm" style="margin-bottom:8px">Today: '+td.length+' item'+(td.length===1?'':'s')+' received</div><div class="tbl"><table><tr><th>Product</th><th class="r">Qty</th><th class="r">Unit cost</th><th class="r">Total</th><th>Date</th></tr>'+
   (rec.slice(0,20).map(s=>'<tr><td>'+esc(s.name)+'</td><td class="r">+'+s.qty+'</td><td class="r">'+(s.cost>0?peso(s.cost):'<span class="sm">—</span>')+'</td><td class="r">'+(s.cost>0?peso(s.cost*s.qty):'<span class="sm">—</span>')+'</td><td class="sm">'+new Date(s.ts).toLocaleDateString()+'</td></tr>').join('')||'<tr><td colspan="5" class="sm">Nothing received yet.</td></tr>')+'</table></div></div>'}
+</script>
+<script id="v16js">
+/* ===== v16: manager permission (discount, void, wholesale, employee) ===== */
+S.discOK=false;S.saleType='';S.mg=null;S.ap=[];S.apLd=0;
+const SALE_LABEL={wholesale:'Wholesale sale',employee:'Employee purchase'};
+const saleTypeOf=idn=>{const m=/^(WHOLESALE|EMPLOYEE)\|/.exec(idn||'');return m?m[1].toLowerCase():''};
+function saleTag(s){const m=/^(WHOLESALE|EMPLOYEE)\|(.*)$/.exec(s.idNo||'');return m?{label:m[1]==='WHOLESALE'?'Wholesale':'Employee purchase',name:m[2]}:null}
+async function rpcM(fn,args){
+  const {data,error}=await sb.rpc(fn,args);
+  if(error){const m=error.message||'Error';throw new Error(/could not find the function|schema cache/i.test(m)?'The database needs manager-approvals.sql first (see README).':m)}
+  return data}
+
+/* ----- the permission pop-up (password is hidden while typing) ----- */
+function mgrPopup(cfg){
+  S.mg=cfg;
+  modal('<h3 style="margin-top:0;color:var(--red)">🔒 Manager permission</h3><p class="sm">'+cfg.note+'</p>'+(cfg.extra||'')+
+  '<label>Manager password</label><input id="mg_pin" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Enter manager password" onkeydown="if(event.key===\'Enter\')mgrGo()">'+
+  '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" id="mg_btn" onclick="mgrGo()">'+(cfg.okLabel||'Approve')+'</button></div><div class="err" id="mg_e"></div>');
+  setTimeout(()=>{const e=document.getElementById(cfg.focus||'mg_pin');if(e)e.focus()},60)}
+async function mgrGo(){
+  const c=S.mg,e=$('mg_e'),b=$('mg_btn'),pin=v('mg_pin');
+  if(c.validate){const m=c.validate();if(m){e.textContent=m;return}}
+  if(!pin){e.textContent='Enter the manager password.';return}
+  if(!navigator.onLine){e.textContent='Manager permission needs an internet connection.';return}
+  b.disabled=true;e.textContent='';
+  try{
+    const r=await c.run(pin);
+    if(!r||!r.ok){e.textContent=(r&&r.error)||'Wrong manager password.';$('mg_pin').value='';b.disabled=false;return}
+    closeModal();await c.done(r)}
+  catch(x){e.textContent=x.message;b.disabled=false}}
+
+/* ----- discount / wholesale / employee on the cashier page ----- */
+function askDiscount(){
+  mgrPopup({note:'A manager must approve a discount for this sale.',
+    run:pin=>rpcM('manager_approve',{pin,action:'discount',detail:'Order discount, '+S.cart.length+' line(s)'}),
+    done:()=>{S.discOK=true;paintRail()}})}
+function askType(kind){
+  const lab=SALE_LABEL[kind],cfg={note:'A manager must approve a '+lab.toLowerCase()+'. Enter the name and the discount, then the manager password.',focus:'mg_name',okLabel:'Approve',
+    extra:'<label>'+(kind==='employee'?'Employee name':'Customer / business name')+'</label><input id="mg_name" autocomplete="off"><label>Discount %</label><input id="mg_pct" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="e.g. 10">',
+    validate:()=>{const n=v('mg_name').trim(),p=parseFloat(v('mg_pct'));if(!n)return 'Enter the name.';if(!(p>0&&p<=100))return 'Enter a discount between 0 and 100.';S.mg.vals={n,p};return ''},
+    run:pin=>rpcM('manager_approve',{pin,action:kind,detail:lab+' '+S.mg.vals.p+'% - '+S.mg.vals.n}),
+    done:()=>{const x=S.mg.vals;S.dm='percent';S.dval=String(x.p);S.idn=kind.toUpperCase()+'|'+x.n;S.saleType=kind;S.discOK=true;paintRail();paintTot()}};
+  mgrPopup(cfg)}
+function saleTypeClear(){S.saleType='';S.dm='percent';S.dval='';S.idn='';S.discOK=false;paintRail()}
+function discPaint(){
+  const u=user();if(!u||(u.role!=='cashier'&&u.role!=='salesrep'))return;
+  const blk=[...document.querySelectorAll('#pr .rb')].find(b=>/ORDER DISCOUNT/.test(b.textContent));if(!blk)return;
+  const types='<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button onclick="askType(\'wholesale\')">Wholesale sale</button><button onclick="askType(\'employee\')">Employee purchase</button></div>';
+  if(S.saleType){const m=/^[A-Z]+\|(.*)$/.exec(S.idn||'');
+    blk.innerHTML='<div class="rh">🏷 '+SALE_LABEL[S.saleType].toUpperCase()+'</div><div style="font-weight:700">'+esc(m?m[1]:'')+'</div><div class="sm">'+esc(S.dval)+'% off · approved by a manager</div><button class="x" style="margin-top:8px" onclick="saleTypeClear()">Remove</button>';return}
+  if(!S.discOK){blk.innerHTML='<div class="rh">🏷 ORDER DISCOUNT</div><button style="width:100%" onclick="askDiscount()">🔒 Discount (manager permission)</button>'+types;return}
+  blk.insertAdjacentHTML('beforeend',types)}
+(function(){const p1=paintRail;paintRail=function(){p1();try{discPaint()}catch(e){console.error(e)}}})();
+(function(){const c0=clearSale;clearSale=function(){c0();S.saleType='';S.discOK=false}})();
+(function(){const r0=resume;resume=function(i){r0(i);S.saleType=saleTypeOf(S.idn);S.discOK=!!(S.dval||S.dm==='senior'||S.dm==='pwd')}})();
+
+/* ----- void a sale on the cashier page (own sales, manager approves) ----- */
+function todayList(){
+  const t0=new Date().setHours(0,0,0,0),mine=S.sales.filter(s=>s.cashier===S.me&&s.ts>=t0).sort((a,b)=>b.ts-a.ts);
+  modal('<h3 style="margin-top:0;color:var(--red)">My sales today</h3>'+(mine.length?'<div class="tbl"><table><tr><th>Receipt</th><th>Time</th><th>Paid</th><th class="r">Total</th><th></th></tr>'+mine.map(s=>'<tr><td>'+rcp(s)+(s.pending?' <span class="sm">(syncing)</span>':'')+'</td><td>'+fTm(s.ts)+'</td><td>'+esc(s.pay)+'</td><td class="r">'+peso(s.total)+'</td><td><button onclick="openRcp(\''+s.id+'\')">View</button></td></tr>').join('')+'</table></div>':'<div class="sm">No sales yet today.</div>')+'<div style="margin-top:14px"><button onclick="closeModal()">Close</button></div>')}
+(function(){const o0=openRcp;openRcp=function(id){
+  o0(id);const u=user(),s=S.sales.find(x=>x.id===id),rb=document.querySelector('#modal .rcb');
+  if(u&&u.role==='cashier'&&s&&s.cashier===S.me&&!s.voided&&!s.pending&&rb)rb.insertAdjacentHTML('beforeend','<button class="x" onclick="voidAskMgr(\''+id+'\')">Void sale (manager)</button>')}})();
+function voidAskMgr(id){
+  const s=S.sales.find(x=>x.id===id);if(!s)return;
+  mgrPopup({note:rcp(s)+' · '+peso(s.total)+'. The items go back into stock and the sale is taken out of the reports. A manager must approve.',focus:'mg_r',okLabel:'Void sale',
+    extra:'<label>Reason</label><select id="mg_r"><option>Wrong item</option><option>Customer changed mind</option><option>Cashier error</option><option>Other</option></select><input id="mg_d" placeholder="Details (optional)" style="margin-top:8px">',
+    validate:()=>{S.mg.vals={reason:v('mg_r')+(v('mg_d').trim()?': '+v('mg_d').trim():'')};return ''},
+    run:pin=>rpcM('void_sale_approved',{sid:String(id),reason:S.mg.vals.reason,pin}),
+    done:async r=>{await Promise.all(['sales','products'].map(load));render();repToast('Sale voided (approved by '+r.approver+')')}})}
+(function(){const r0=render;render=function(){r0();try{
+  const u=user();
+  if(u&&u.role==='cashier'){const c=document.querySelector('aside .sc');if(c&&!c.dataset.v){c.dataset.v='1';c.style.cursor='pointer';c.onclick=todayList;c.insertAdjacentHTML('beforeend','<span class="sm2">tap to view / void</span>')}}
+}catch(e){console.error(e)}}})();
+
+/* ----- admin: approval passwords in Users, approvals log in Reports ----- */
+function mgrPinSection(id,u){
+  if(!id)return '<div class="sm" style="margin-top:10px">Manager or Admin account? Save it first, then edit it to set the approval password.</div>';
+  if(u.role!=='manager'&&u.role!=='admin')return '';
+  return '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--bd)"><label style="margin-top:0">Manager approval password</label><div class="sm" style="margin-bottom:6px">Cashiers type this to get permission for discounts, voids, wholesale and employee sales. It is separate from the login password.</div><input id="u7" type="password" autocomplete="new-password" placeholder="New approval password (4+ characters)"><button style="margin-top:8px" onclick="setMgrPin(\''+id+'\')">Save approval password</button><div class="err" id="u7e"></div></div>'}
+async function setMgrPin(id){
+  const p=v('u7'),e=$('u7e');e.style.color='';
+  if(p.length<4){e.textContent='Use at least 4 characters.';return}
+  try{await rpcM('set_manager_pin',{uid:id,pin:p});$('u7').value='';e.style.color='var(--ok)';e.textContent='Approval password saved.'}
+  catch(x){e.textContent=x.message}}
+async function loadAp(){
+  S.apLd=1;
+  try{const {data,error}=await sb.from('approvals').select('*').order('created_at',{ascending:false}).limit(25);if(!error)S.ap=data}catch(e){}
+  S.apLd=2;if(S.tab==='rep')render()}
+function approvalsHTML(){
+  if(!S.apLd)loadAp();
+  if(!S.ap.length)return '';
+  return '<div class="card" style="margin-top:14px"><h3 style="margin-top:0">Manager approvals</h3><div class="tbl"><table><tr><th>When</th><th>Asked by</th><th>Approved by</th><th>For</th><th>Detail</th></tr>'+
+    S.ap.map(a=>'<tr><td>'+fT(a.created_at)+'</td><td>'+esc(a.requested_by)+'</td><td>'+esc(a.approver)+'</td><td><b>'+esc(a.action)+'</b></td><td class="sm">'+esc(a.detail)+'</td></tr>').join('')+'</table></div></div>'}
+(function(){const r=repHTML;repHTML=function(){return r()+approvalsHTML()}})();
+(function(){const g1=go;go=function(t){if(t==='rep')S.apLd=0;return g1(t)}})();
 </script>
 </body></html>
