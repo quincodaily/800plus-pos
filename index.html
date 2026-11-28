@@ -285,7 +285,7 @@ function repHTML(){const t0=new Date().setHours(0,0,0,0),from=rangeFrom(S.range)
   const tp=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5);
   return '<div class="card"><select style="width:auto" onchange="S.range=this.value;render()"><option value="today">Today</option><option value="week"'+(S.range==='week'?' selected':'')+'>Last 7 days</option><option value="month"'+(S.range==='month'?' selected':'')+'>This month</option><option value="all"'+(S.range==='all'?' selected':'')+'>All time</option></select> <button onclick="exportSold()">\u2b07 Export quantity sold</button><div class="stats" style="margin-top:12px"><div class="card stat"><span class="sm">Revenue</span><b>'+peso(l.reduce((a,s)=>a+s.total,0))+'</b></div><div class="card stat"><span class="sm">Profit</span><b>'+peso(l.reduce((a,x)=>a+x.total-(x.cost||0),0))+'</b></div><div class="card stat"><span class="sm">Transactions</span><b>'+l.length+'</b></div><div class="card stat"><span class="sm">Discounts given</span><b>'+peso(l.reduce((a,s)=>a+s.discount,0))+'</b></div></div><div class="pos" style="grid-template-columns:1fr 1fr"><div><b>By cashier</b><table>'+Object.entries(by).map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+peso(e[1])+'</td></tr>').join('')+'</table></div><div><b>Top sellers</b><table>'+tp.map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+e[1]+' sold</td></tr>').join('')+'</table></div></div><b>Sales log</b><div class="tbl"><table><tr><th>Time</th><th>Cashier</th><th>Items</th><th>Total</th></tr>'+l.slice(0,100).map(s=>'<tr><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td>'+s.items.map(i=>i.qty+'× '+esc(i.name)).join(', ')+(s.discount?' <span class="tag">'+esc(s.discType)+'</span>':'')+(s.oversold?' <span class="tag r">OVERSOLD</span>':'')+(s.offline?' <span class="tag w">offline</span>':'')+'</td><td>'+peso(s.total)+'</td></tr>').join('')+'</table></div></div>'}
 function usrHTML(){return '<div class="card"><button class="p" onclick="usrForm()">+ Add account</button><div class="tbl" style="margin-top:10px"><table><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr>'+S.users.map(u=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td style="white-space:nowrap"><button onclick="usrForm(\''+u.id+'\')">Edit</button> '+(u.username!==S.me?'<button class="x" onclick="del(\'users\',\''+u.id+'\')">✕</button>':'')+'</td></tr>').join('')+'</table></div></div>'}
-function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier"'+(u.role==='cashier'?' selected':'')+'>Cashier</option><option value="salesrep"'+(u.role==='salesrep'?' selected':'')+'>Sales rep</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
+function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier"'+(u.role==='cashier'?' selected':'')+'>Cashier</option><option value="salesrep"'+(u.role==='salesrep'?' selected':'')+'>Sales rep</option><option value="warehouse"'+(u.role==='warehouse'?' selected':'')+'>Warehouse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
 async function saveUsr(id){const un=v('u2').trim().toLowerCase();if(!un||!v('u3')){$('ue').textContent='Username and password are required.';return}
   if(!id&&S.users.some(x=>x.username===un)){$('ue').textContent='Username already taken.';return}
   const d={name:v('u1').trim()||un,username:un,password:v('u3'),role:v('u4')};
@@ -345,6 +345,7 @@ const toP=r=>({id:r.id,name:r.name,generic:r.generic||'',category:r.category||''
 const toSale=r=>({id:r.id,ts:new Date(r.sold_at).getTime(),cashier:r.cashier,items:r.items||[],subtotal:+r.subtotal,cost:0,discType:r.discount_type,discVal:r.discount_value,idNo:r.id_no,discount:+r.discount,total:+r.total,pay:r.pay,cash:+r.cash,change:+r.change,rx:r.rx,oversold:r.oversold,review:r.review_status,offline:r.offline});
 const TB={users:['profiles',r=>r],products:['products',toP],suppliers:['suppliers',r=>r],sales:['sales',toSale,'sold_at'],stockins:['stock_ins',r=>({id:r.id,ts:new Date(r.created_at).getTime(),name:r.name,qty:r.qty})]};
 const isAdmin=()=>{const u=user();return !!u&&u.role==='admin'};
+const STAFF=['admin','warehouse','manager'];const isStaff=()=>{const u=user();return !!u&&STAFF.includes(u.role)};
 function applyPending(n){const q=LS.get('pos_q',[]);
   if(n==='products')q.forEach(s=>s.items.forEach(i=>{const p=S.products.find(x=>x.id===i.id);if(p)p.stock-=i.qty}));
   if(n==='sales')q.forEach(s=>{if(!S.sales.some(x=>x.id===s.id))S.sales.unshift(Object.assign({},s,{offline:true,pending:true}))})}
@@ -355,9 +356,9 @@ async function load(n){const [t,m,o]=TB[n];let all=[],from=0;
   applyPending(n)}
 const TM={};
 function subscribe(){if(S.ch)return;S.ch=sb.channel('pos').on('postgres_changes',{event:'*',schema:'public'},p=>{const n=Object.keys(TB).find(k=>TB[k][0]===p.table);
-  if(n&&S.me&&(n!=='stockins'||isAdmin())){clearTimeout(TM[n]);TM[n]=setTimeout(async()=>{await load(n);refreshUI()},300)}}).subscribe()}
-function refreshUI(){const a=document.activeElement;if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)){if(!isAdmin())paintMain();paintStatus()}else render()}
-async function reloadAll(){if(!S.me)return;await Promise.all(['users','products','suppliers','sales'].concat(isAdmin()?['stockins']:[]).map(load));refreshUI()}
+  if(n&&S.me&&(n!=='stockins'||isStaff())){clearTimeout(TM[n]);TM[n]=setTimeout(async()=>{await load(n);refreshUI()},300)}}).subscribe()}
+function refreshUI(){const a=document.activeElement;if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)){if(!isStaff())paintMain();paintStatus()}else render()}
+async function reloadAll(){if(!S.me)return;await Promise.all(['users','products','suppliers','sales'].concat(isStaff()?['stockins']:[]).map(load));refreshUI()}
 async function init(){render();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
@@ -372,7 +373,7 @@ async function init(){render();
 async function start(uid){S.uid=uid;await load('users');let me=S.users.find(u=>u.id===uid),why='';
   if(!me){const r=await sb.from('profiles').select('*').eq('id',uid).maybeSingle();if(r.error)why=' [DB error: '+r.error.message+' / '+(r.error.code||'')+']';else if(!r.data)why=' [no profile row for auth id '+uid+']';else{me=r.data;if(!S.users.some(u=>u.id===uid))S.users.push(me)}}
   if(!me||me.active===false){S.err='This account has no POS profile or is disabled. Ask the admin.'+why+(me&&me.active===false?' [active=false]':'');if(navigator.onLine)await sb.auth.signOut().catch(()=>{});S.uid=null;return render()}
-  S.me=me.username;try{sessionStorage.setItem('pos_tab','1')}catch(e){}await Promise.all(['products','suppliers','sales'].concat(me.role==='admin'?['stockins']:[]).map(load));S.ok=1;subscribe();render();flush()}
+  S.me=me.username;try{sessionStorage.setItem('pos_tab','1')}catch(e){}await Promise.all(['products','suppliers','sales'].concat(STAFF.includes(me.role)?['stockins']:[]).map(load));S.ok=1;subscribe();render();flush()}
 async function login(){const u=v('lu').trim().toLowerCase(),e=$('le');e.textContent='Signing in\u2026';
   const {data,error}=await sb.auth.signInWithPassword({email:u+'@800plus.pos',password:v('lp')});
   if(error){e.textContent=navigator.onLine?('Sign-in failed: '+(error.message||'unknown')+' (status '+(error.status||'none')+', code '+(error.code||'none')+')'):'You need internet to sign in.';console.error(error);return}
@@ -457,13 +458,13 @@ function adminShell(u){const t=TITLES[S.tab]||['',''];
   '<div class="sp"></div><div class="auser"><div class="av">'+esc((u.name||u.username).slice(0,2).toUpperCase())+'</div><div><b>'+esc(u.name||u.username)+'</b><span>Administrator</span></div><button onclick="logout()" title="Log out" aria-label="Log out">'+ico('out',16)+'</button></div></aside>'+
   '<div class="amain"><div class="atop"><div><h1>'+t[0]+'</h1><p>'+t[1]+'</p></div><div class="clk" id="clk"></div></div><div class="acon">'+adminHTML()+'</div></div></div>'}
 function tickClock(){const el=$('clk');if(!el)return;const d=new Date();el.innerHTML='<b>'+d.toLocaleTimeString('en-US')+'</b><span>'+d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>'}
-function render(){const a=$('app');if(!S.me||!user()){document.body.classList.remove('cash');return a.innerHTML=loginHTML()}const u=user();document.body.classList.toggle('cash',u.role!=='admin');
-  if(u.role==='admin'){const y=window.scrollY;a.innerHTML=adminShell(u);tickClock();window.scrollTo(0,y);return}
+function render(){const a=$('app');if(!S.me||!user()){document.body.classList.remove('cash');return a.innerHTML=loginHTML()}const u=user();document.body.classList.toggle('cash',!STAFF.includes(u.role));
+  if(STAFF.includes(u.role)){const y=window.scrollY;a.innerHTML=adminShell(u);tickClock();window.scrollTo(0,y);return}
   const f=document.activeElement&&document.activeElement.id==='q';a.innerHTML=shell(u);paintMain();paintRail();paintStatus();if(f)$('q').focus()}
 
 /* ---- costs (admin only; stored in separate admin-only tables so cashiers never receive them) ---- */
 async function pageAll(t,k){let all=[],from=0;for(;;){const {data,error}=await sb.from(t).select('*').order(k).range(from,from+999);if(error)throw error;all=all.concat(data);if(data.length<1000)break;from+=1000}return all}
-async function mergeCosts(n){if(!isAdmin()||!navigator.onLine)return;
+async function mergeCosts(n){if(!isStaff()||!navigator.onLine)return;
   try{if(n==='products'){const m={};(await pageAll('product_costs','product_id')).forEach(r=>m[r.product_id]=+r.cost);S.products.forEach(p=>p.cost=m[p.id]||0)}
   else if(n==='sales'){const m={};(await pageAll('sale_costs','sale_id')).forEach(r=>m[r.sale_id]=+r.cost_total);S.sales.forEach(s=>s.cost=m[s.id]||0)}}catch(e){}}
 
@@ -1390,5 +1391,26 @@ function repHook(){
   else if(isRep()){if(!S.repStarted){S.repStarted=true;loadMyRep()}repPaint()}
   else repPopups()}
 (function(){const r0=render;render=function(){r0();try{repHook()}catch(e){console.error(e)}}})();
+</script>
+<style id="v14css">
+.role-manager .ia button[title="Edit"],.role-manager .ia button[title="Delete"],.role-manager .ivf button.p{display:none!important}
+.role-warehouse .ia button[title="Delete"]{display:none!important}
+</style>
+<script id="v14js">
+/* ===== v14: warehouse (Inventory + Stock in) and manager (Reports + Inventory, view only) accounts ===== */
+const ROLE_TABS={warehouse:['inv','stock'],manager:['rep','inv']};
+const ROLE_LABEL={admin:'Administrator',warehouse:'Warehouse',manager:'Manager'};
+function adminShell(u){
+  const allowed=ROLE_TABS[u.role];
+  if(allowed&&!allowed.includes(S.tab))S.tab=allowed[0];
+  const t=TITLES[S.tab]||['',''];
+  const nav=NAV.map(g=>[g[0],g[1].filter(i=>!allowed||allowed.includes(i[0]))]).filter(g=>g[1].length);
+  return '<div class="ashell"><aside class="anav"><div class="abrand"><div class="mark">800+</div><div><b>800+ Pharmacy</b><span>'+(allowed?ROLE_LABEL[u.role].toUpperCase():'ADMIN PANEL')+'</span></div></div>'+
+  nav.map(g=>'<div class="ng">'+g[0].toUpperCase()+'</div>'+g[1].map(i=>'<button class="ni'+(S.tab===i[0]?' on':'')+'" onclick="go(\''+i[0]+'\')">'+ico(i[2])+'<span>'+i[1]+'</span></button>').join('')).join('')+
+  '<div class="sp"></div><div class="auser"><div class="av">'+esc((u.name||u.username).slice(0,2).toUpperCase())+'</div><div><b>'+esc(u.name||u.username)+'</b><span>'+(ROLE_LABEL[u.role]||'Administrator')+'</span></div><button onclick="logout()" title="Log out" aria-label="Log out">'+ico('out',16)+'</button></div></aside>'+
+  '<div class="amain"><div class="atop"><div><h1>'+t[0]+'</h1><p>'+t[1]+'</p></div><div class="clk" id="clk"></div></div><div class="acon">'+adminHTML()+'</div></div></div>'}
+(function(){const a0=adminHTML;adminHTML=function(){const u=user();if(u&&ROLE_TABS[u.role]&&!ROLE_TABS[u.role].includes(S.tab))S.tab=ROLE_TABS[u.role][0];return a0()}})();
+(function(){const g0=go;go=function(t){const u=user();if(u&&ROLE_TABS[u.role]&&!ROLE_TABS[u.role].includes(t))return;return g0(t)}})();
+(function(){const r0=render;render=function(){const u=user(),b=document.body;['manager','warehouse'].forEach(r=>b.classList.toggle('role-'+r,!!u&&u.role===r));r0()}})();
 </script>
 </body></html>
