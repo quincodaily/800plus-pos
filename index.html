@@ -300,7 +300,7 @@ const PILL='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="
 function shell(u){const t0=new Date().setHours(0,0,0,0),m=S.sales.filter(s=>s.ts>=t0&&s.cashier===S.me);
   return '<div class="shell"><aside><div class="brand"><div class="mark">8+</div><div><b>800+ Pharmacy</b><span class="sm2">POS SYSTEM</span></div></div><h3 class="un">'+esc(u.name||u.username)+'</h3><div class="sm2">Cashier · '+esc(u.username)+'</div><div class="sc"><span>TODAY\'S SALES</span><b>'+peso(m.reduce((a,s)=>a+s.total,0))+'</b><span>'+m.length+' transactions today</span></div><div class="sc"><span>PRODUCTS AVAILABLE</span><b>'+S.products.filter(p=>p.stock>0).length+'</b><span>in stock</span></div><div id="st"></div><div class="sp"></div><div class="sm2">QUICK ACTIONS</div><div class="qa"><button onclick="holdSale()">⏸ Hold</button><button onclick="heldList()">🗂 Held ('+S.held.length+')</button><button onclick="$(\'q\').focus()">🔍 Search</button><button onclick="logout()">⎋ Logout</button></div></aside><main><div class="mh"><h2>Point of Sale</h2><div class="vt"><button id="vl" class="'+(S.view==='list'?'on':'')+'" onclick="setView(\'list\')" title="List view">☰</button><button id="vg" class="'+(S.view!=='list'?'on':'')+'" onclick="setView(\'grid\')" title="Grid view">▦</button></div></div><div class="sbar"><input id="q" placeholder="Scan barcode or search product name…" value="'+esc(S.q)+'" oninput="S.q=this.value;paintMain()" onkeydown="if(event.key===\'Enter\')enterSearch()"><button class="p" onclick="enterSearch()">Search</button></div><div id="pm"></div></main><section class="rail" id="pr"></section></div>'}
 function setView(v){S.view=v;$('vl').classList.toggle('on',v==='list');$('vg').classList.toggle('on',v!=='list');paintMain()}
-function gridHTML(){const q=S.q.trim().toLowerCase();let l=S.products.filter(p=>!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+function gridHTML(){const q=S.q.trim().toLowerCase();let l=S.products.filter(p=>!q||[p.name,p.generic,p.category,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
   if(!l.length)return '<div class="sm" style="grid-column:1/-1;padding:20px">No products found.</div>';
   const tot=l.length,cap=150;l=l.slice(0,cap);
   return l.map(p=>{const ex=days(p.expiry)<0,out=p.stock<=0,low=!out&&p.stock<=(p.reorder||5);
@@ -311,7 +311,7 @@ function paintMain(){S.cart=S.cart.filter(c=>prod(c.id));const el=$('pm');if(!el
 function paint(){paintMain();paintRail()}
 function addCart(id){const p=prod(id),c=S.cart.find(x=>x.id===id);if(c){if(c.qty<p.stock)c.qty++}else S.cart.push({id,qty:1});paintRail()}
 function qty(id,d){const c=S.cart.find(x=>x.id===id),p=prod(id);c.qty=Math.max(0,Math.min(p.stock,c.qty+d));S.cart=S.cart.filter(x=>x.qty>0);paintRail()}
-function enterSearch(){const q=S.q.trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>p.barcode&&p.barcode.toLowerCase()===q);if(!m.length){const l=S.products.filter(p=>p.name.toLowerCase().includes(q));if(l.length===1)m=l}
+function enterSearch(){const q=S.q.trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>(p.barcode&&p.barcode.toLowerCase()===q)||(p.itemNo&&String(p.itemNo).toLowerCase()===q));if(!m.length){const l=S.products.filter(p=>p.name.toLowerCase().includes(q));if(l.length===1)m=l}
   if(m.length){const p=m[0];if(p.stock>0&&days(p.expiry)>=0)addCart(p.id);S.q='';$('q').value='';paint()}}
 function discAmt(sub){const m=S.dm;if(m==='senior'||m==='pwd')return sub*.2;const x=parseFloat(S.dval)||0;return Math.min(sub,m==='percent'?sub*Math.min(x,100)/100:x)}
 function calc(){const sub=S.cart.reduce((s,c)=>s+(prod(c.id)?prod(c.id).price*c.qty:0),0),disc=discAmt(sub);return{sub,disc,tot:sub-disc,rx:S.cart.some(c=>prod(c.id)&&prod(c.id).rx)}}
@@ -524,7 +524,7 @@ function invHTML(){return '<div class="card"><div class="tb"><input placeholder=
   (S.low?'<div class="chip">Low stock only <button onclick="S.low=false;render()" aria-label="Clear filter">✕</button></div>':'')+
   '<div class="tbl"><table><tr><th>Product</th><th>Category</th><th class="r">Unit cost</th><th class="r">Sale price</th><th class="r">Margin</th><th class="r">Stock</th><th>Expiry</th><th>Supplier</th><th></th></tr><tbody id="it">'+invRows()+'</tbody></table></div></div>'}
 function invRows(){const q=S.q.toLowerCase();
-  return S.products.filter(p=>(!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q))&&(!S.low||p.stock<=(p.reorder||0))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>
+  return S.products.filter(p=>(!q||[p.name,p.generic,p.category,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q))&&(!S.low||p.stock<=(p.reorder||0))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>
   '<tr><td><b>'+esc(p.name)+'</b>'+(p.rx?' <span class="tag r">Rx</span>':'')+'<div class="sm">'+esc(p.generic)+'</div></td><td>'+esc(p.category)+'</td><td class="r">'+(p.cost>0?peso(p.cost):'<span class="sm">not set</span>')+'</td><td class="r"><b>'+peso(p.price)+'</b></td><td class="r'+(p.cost>p.price?' neg':'')+'">'+mgn(p)+'</td><td class="r'+(p.stock<=(p.reorder||0)?' neg':'')+'">'+p.stock+'</td><td>'+esc(p.expiry)+' '+expTag(p.expiry)+'</td><td>'+esc((S.suppliers.find(s=>s.id===p.supplier)||{}).name||'')+'</td><td style="white-space:nowrap"><button onclick="prodForm(\''+p.id+'\')">Edit</button> <button class="x" onclick="del(\'products\',\''+p.id+'\')">✕</button></td></tr>').join('')||'<tr><td colspan="9" class="sm">No products found.</td></tr>'}
 function mgPrev(){const c=parseFloat(v('f11'))||0,p=parseFloat(v('f4'))||0,e=$('mgn');if(!e)return;e.textContent=p>0&&c>0?'Profit per unit: '+peso(p-c)+' ('+Math.round((p-c)/p*100)+'% margin)'+(c>p?' — selling below cost!':''):''}
 function prodForm(id){const p=id?prod(id):{};
@@ -597,7 +597,7 @@ function invHTML(){return '<div class="card"><div class="tb"><input placeholder=
   (S.low?'<div class="chip">Low stock only <button onclick="S.low=false;render()" aria-label="Clear filter">✕</button></div>':'')+
   '<div class="tbl"><table><tr><th>Product</th><th>Category</th><th>Supplier</th><th>Expiry</th><th class="r">Stock</th><th class="r">Cost</th><th class="r">Sell price</th><th class="r">Profit / margin</th><th>Status</th><th title="Units sold in the last 30 days: 10+ fast, 3–9 moderate, 1–2 slow">Movement (30d)</th><th></th></tr><tbody id="it">'+invRows()+'</tbody></table></div></div>'}
 function invRows(){const q=S.q.toLowerCase(),sm=soldMap(Date.now()-30*864e5);
-  return S.products.filter(p=>(!q||[p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q))&&(!S.low||p.stock<=(p.reorder||0))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
+  return S.products.filter(p=>(!q||[p.name,p.generic,p.category,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q))&&(!S.low||p.stock<=(p.reorder||0))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
     const out=p.stock<=0,low=!out&&p.stock<=(p.reorder||0),pu=p.cost>0?p.price-p.cost:null,mg=pu!=null&&p.price>0?pu/p.price*100:null,n30=(sm[p.id]||{}).qty||0,
       mv=n30>=10?['Fast moving','f']:n30>=3?['Moderate','m']:n30>=1?['Slow','s']:['No sales','n'];
     return '<tr><td><b>'+esc(p.name)+'</b>'+(p.rx?' <span class="tag r">Rx</span>':'')+'<div class="sm">'+esc(p.generic)+'</div>'+(p.barcode?'<span class="bcode">'+esc(p.barcode)+'</span>':'')+'</td><td>'+esc(p.category)+'</td><td>'+esc((S.suppliers.find(s=>s.id===p.supplier)||{}).name||'')+'</td><td>'+esc(p.expiry)+' '+expTag(p.expiry)+'</td>'+
@@ -633,9 +633,9 @@ function siCalc(src){const c=parseFloat(v('s5')),m=parseFloat(v('s6')),pr=parseF
   siSave()}
 function siRound(){const pr=parseFloat(v('s7'));if(!(pr>=0))return;$('s7').value=Math.ceil(pr-1e-9);siCalc('p')}
 function siFind(){const q=v('s0').trim().toLowerCase(),el=$('sres');if(!q){el.innerHTML='';return}
-  const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q)).slice(0,8);
+  const l=S.products.filter(p=>[p.name,p.generic,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q)).slice(0,8);
   el.innerHTML=l.length?l.map(p=>'<button class="sr" onclick="siPick(\''+p.id+'\')"><span>'+esc(p.name)+'</span><span class="sm">'+esc(p.barcode||'')+' · stock '+p.stock+'</span></button>').join(''):'<div class="sm" style="margin-top:6px">No match. Add the product in Inventory first.</div>'}
-function siEnter(){const q=v('s0').trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>p.barcode&&p.barcode.toLowerCase()===q);if(!m.length){const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q));if(l.length===1)m=l}if(m.length)siPick(m[0].id)}
+function siEnter(){const q=v('s0').trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>(p.barcode&&p.barcode.toLowerCase()===q)||(p.itemNo&&String(p.itemNo).toLowerCase()===q));if(!m.length){const l=S.products.filter(p=>[p.name,p.generic,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q));if(l.length===1)m=l}if(m.length)siPick(m[0].id)}
 function siPick(id){S.si.pid=id;S.si.f=null;S.si.msg='';$('sres').innerHTML='';$('s0').value='';$('sform').innerHTML=siFormHTML();siSave();$('s2').focus()}
 function siClear(){S.si.pid='';S.si.f=null;$('sform').innerHTML='';$('s0').focus()}
 async function doStockIn(){const p=prod(S.si.pid),e=$('se'),q=parseInt(v('s2')),c=v('s5')===''?null:parseFloat(v('s5')),pr=v('s7')===''?null:parseFloat(v('s7')),upd=$('s8').checked;
@@ -712,7 +712,7 @@ const supName=id=>(S.suppliers.find(s=>s.id===id)||{}).name||'';
 function ivList(){
  const q=S.q.toLowerCase(),I=S.iv,sm=soldMap(Date.now()-30*864e5);
  return S.products.filter(p=>{
-  if(q&&![p.name,p.generic,p.category,p.barcode].join(' ').toLowerCase().includes(q))return false;
+  if(q&&![p.name,p.generic,p.category,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q))return false;
   if(S.low&&!(p.stock<=(p.reorder||0)))return false;
   const st=iStat(p);
   if(I.f==='exp'&&st!=='exp')return false;
@@ -737,7 +737,7 @@ function invRows(){
  const rows=L.slice((S.iv.pg-1)*n,S.iv.pg*n);
  return rows.map(({p,n30})=>{
   const st=iStat(p),pu=p.cost>0?p.price-p.cost:null,mg=pu!=null&&p.price>0?pu/p.price*100:null,mv=iMov(n30),sn=supName(p.supplier);
-  return '<tr><td><div class="pn"><span class="pi">'+ivi('cap',18)+'</span><div><b>'+esc(p.name)+(p.rx?' <span class="tag r">Rx</span>':'')+'</b>'+(p.generic?'<div class="sm">'+esc(p.generic)+'</div>':'')+(p.barcode?'<span class="bc">'+esc(p.barcode)+'</span>':'')+'</div></div></td>'+
+  return '<tr><td><div class="pn"><span class="pi">'+ivi('cap',18)+'</span><div><b>'+esc(p.name)+(p.rx?' <span class="tag r">Rx</span>':'')+'</b>'+(p.generic?'<div class="sm">'+esc(p.generic)+'</div>':'')+(p.itemNo?'<span class="bc" style="margin-right:4px">Item '+esc(p.itemNo)+'</span>':'')+(p.barcode?'<span class="bc">'+esc(p.barcode)+'</span>':'')+'</div></div></td>'+
   '<td>'+esc(p.category)+'</td><td>'+(sn?'<span class="sup">'+esc(sn)+'</span>':'<span class="sm">—</span>')+'</td>'+
   '<td>'+(p.expiry?esc(p.expiry)+' '+expTag(p.expiry):'<span class="sm">—</span>')+'</td>'+
   '<td class="r'+(st==='in'?'':' neg')+'"><b>'+p.stock+'</b> pcs</td><td class="r">'+(p.cost>0?peso(p.cost):'<span class="sm">not set</span>')+'</td><td class="r"><b>'+peso(p.price)+'</b></td>'+
@@ -763,7 +763,7 @@ function invHTML(){
  '<div class="ivlg"><b style="color:var(--tx)">Product Movement:</b><span><i style="background:#2e7d32"></i>Fast = 10+ sold / 30 days</span><span><i style="background:#2563eb"></i>Moderate = 3–9</span><span><i style="background:#d97706"></i>Slow = 1–2</span><span><i style="background:#8a8a8a"></i>Inactive / No sales</span><em>Auto-calculated from last 30 days of sales</em></div>'+
  '<div class="ivt"><div class="tbl"><table><thead><tr><th>Product</th><th>Category</th><th>Supplier</th><th>Expiry date</th><th class="r">Stock</th><th class="r">Cost</th><th class="r">Sell price</th><th class="r">Profit / margin</th><th>Status</th><th>Movement</th><th>Actions</th></tr></thead><tbody id="it">'+invRows()+'</tbody></table></div><div class="ipg" id="ipg">'+ivPager()+'</div></div>'}
 function viewProd(id){const p=prod(id);if(!p)return;const st=iStat(p),r=(k,v)=>'<div class="tot"><span class="sm">'+k+'</span><span>'+v+'</span></div>';
- modal('<h3 style="margin-top:0;color:var(--red)">'+esc(p.name)+'</h3>'+r('Generic',esc(p.generic)||'—')+r('Category',esc(p.category)||'—')+r('Barcode',esc(p.barcode)||'—')+r('Supplier',esc(supName(p.supplier))||'—')+r('Expiry',p.expiry?esc(p.expiry):'—')+r('Stock',p.stock+' pcs (reorder at '+(p.reorder||0)+')')+r('Cost',p.cost>0?peso(p.cost):'not set')+r('Sell price',peso(p.price))+r('Status','<span class="sb '+st+'">'+({exp:'Expired',out:'Out of stock',crit:'Critical',low:'Low stock','in':'In stock'})[st]+'</span>')+r('Prescription only',p.rx?'Yes':'No')+'<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Close</button><button class="p" style="flex:1" onclick="prodForm(\''+p.id+'\')">Edit</button></div>')}
+ modal('<h3 style="margin-top:0;color:var(--red)">'+esc(p.name)+'</h3>'+r('Item no.',esc(p.itemNo)||'—')+r('Generic',esc(p.generic)||'—')+r('Category',esc(p.category)||'—')+r('Barcode',esc(p.barcode)||'—')+r('Supplier',esc(supName(p.supplier))||'—')+r('Expiry',p.expiry?esc(p.expiry):'—')+r('Stock',p.stock+' pcs (reorder at '+(p.reorder||0)+')')+r('Cost',p.cost>0?peso(p.cost):'not set')+r('Sell price',peso(p.price))+r('Status','<span class="sb '+st+'">'+({exp:'Expired',out:'Out of stock',crit:'Critical',low:'Low stock','in':'In stock'})[st]+'</span>')+r('Prescription only',p.rx?'Yes':'No')+'<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Close</button><button class="p" style="flex:1" onclick="prodForm(\''+p.id+'\')">Edit</button></div>')}
 
 /* receipt: confirmation banner + Print receipt button (prints a clean 80mm slip) */
 function receipt(s,id,hist){
@@ -862,9 +862,9 @@ function poAddP(p){const ex=S.pd.items.find(i=>sameId(i.pid,p.id));if(ex){ex.qty
   const r=p.reorder||0;S.pd.items.push({pid:p.id,name:p.name,stock:p.stock,qty:p.stock<=r?Math.max(r*2-p.stock,1):1,cost:p.cost>0?p.cost:''})}
 function poAdd(id){const p=prod(id);if(!p)return;poAddP(p);poFormShow();const q=$('pq');if(q)q.focus()}
 function poFind(){const q=v('pq').trim().toLowerCase(),el=$('pres');if(!q){el.innerHTML='';return}
-  const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q)).slice(0,8);
+  const l=S.products.filter(p=>[p.name,p.generic,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q)).slice(0,8);
   el.innerHTML=l.length?l.map(p=>'<button onclick="poAdd(\''+p.id+'\')"><span>'+esc(p.name)+'</span><span class="sm">'+esc(p.barcode||'')+' · stock '+p.stock+'</span></button>').join(''):'<div class="sm" style="margin-top:6px">No match. Add the product in Inventory first.</div>'}
-function poEnter(){const q=v('pq').trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>p.barcode&&p.barcode.toLowerCase()===q);if(!m.length){const l=S.products.filter(p=>[p.name,p.generic,p.barcode].join(' ').toLowerCase().includes(q));if(l.length===1)m=l}if(m.length)poAdd(m[0].id)}
+function poEnter(){const q=v('pq').trim().toLowerCase();if(!q)return;let m=S.products.filter(p=>(p.barcode&&p.barcode.toLowerCase()===q)||(p.itemNo&&String(p.itemNo).toLowerCase()===q));if(!m.length){const l=S.products.filter(p=>[p.name,p.generic,p.barcode,p.itemNo].join(' ').toLowerCase().includes(q));if(l.length===1)m=l}if(m.length)poAdd(m[0].id)}
 function poSuggest(){const l=S.products.filter(p=>p.stock<=(p.reorder||0)&&(!S.pd.sup||sameId(p.supplier,S.pd.sup)));
   if(!l.length){const e=$('poe');if(e)e.textContent='No low-stock items'+(S.pd.sup?' for this supplier':'')+'.';return}
   l.forEach(poAddP);poFormShow()}
@@ -1068,5 +1068,44 @@ function printDoc(title,body,css){
   const f=document.createElement('iframe');f.id='rcf';f.style.cssText='position:fixed;left:-300mm;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none';document.body.appendChild(f);
   const d=f.contentWindow.document;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+body+'</body></html>');d.close();
   setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.print()}},400)}
+</script>
+<script id="v10js">
+/* ===== v10: "Item no." field on products (top of the Add/Edit form, above Brand / name) ===== */
+(function(){const t=TB.products[1];TB.products[1]=r=>Object.assign(t(r),{itemNo:r.item_no||''})})();
+if(S.products)S.products.forEach(p=>{if(p.itemNo===undefined)p.itemNo=''});
+
+/* Division -> Category lists (Consumer Products / Pharma). Division is worked out from the category, so no database change is needed. */
+const DIVS={"Consumer Products": ["Adult Diaper", "Baby Care", "Beauty Soap", "Beverages", "Breakfast Solution", "Canned/Dried Foods", "Condom", "Confectionery", "Dairy Product", "Drinking Water", "Energy Drink", "Frozen Foods", "Health & Beauty", "Homecare", "Intant Noodles", "Milk Product- Adult", "Milk Product- Pedia", "Milk Products", "Oral Care", "Promo Pack", "Snack Foods", "Soya Drink"], "Pharma": ["Analgesic (Opoid)", "Anitgout Agent", "Antacid- Alkalizing Agent", "Antacid- H2 Blocker", "Antacid- Proton Pump Inhibitor", "Anthelmintics", "Anti- Anginal drug", "Anti- Asthma & Anti-allergy", "Anti- Asthma & COPD", "Anti- Asthma & Cough Remedy", "Antibacterial", "Antiamoebic", "Antianemic Preparation", "Anticoagulant", "Anticonvulsant", "Antidiabetic Agent", "Antidiarrheal", "Anti-emetic Agent", "Anti-fungal", "Antigout Agent", "Antihistamine & Antiallergic", "Antispasmodic", "Anti-TB Agent", "Antitussive Agent", "Anti-vertigo", "Antiviral", "Appetite Enhancer", "Beta-Blocker", "Calcium with Dietary Supplements", "Cold and Flu Preparation", "Cough & Colds", "Cough Remedy", "Dermatologicals", "Diuretic", "Ear Preparation", "Electrolytes", "Emollients & Skin Protectives", "Eye Preparation", "Fever & Flu", "Fever,Cough & Colds", "Food Supplement", "Galenical Preparation", "Genitourinary System", "Haemostatic", "Hepatic drug", "Hepatoprotective", "Laxative", "Lipid- lowering Agent", "Medical Device", "Mouth/ Throat Preparation", "Multivitamins", "Muscle Relaxant", "Nasal Preparation", "Neurological agent", "NSAID", "Oral Contraceptive", "OTC- Analgesic & Antipyretic", "OTC- Antacid & Antiflatulent", "Penicillin", "Quinolone", "Renal Theraphy Adjunct", "Skin Antiseptic", "Statins- Lower Choloesterol", "Steroids", "Tetracycline", "Topical Antibacterial", "Topical Antifungal", "Topical Antipuritic", "Topical Skin Protectant", "Urinary Alkalinizer", "Vitamin", "Vitamin A, D & E", "Vitamin B-complex", "Vitamin C", "Vitamins & Minerals", "Vitamins & Minerals- Pediatric"]};
+const CAT_DIV={};Object.keys(DIVS).forEach(d=>DIVS[d].forEach(c=>CAT_DIV[c]=d));
+function divFill(){
+  const d=$('f3d').value,s=$('f3s'),cur=$('f3').value,h=$('f3h'),o=$('f3o');
+  if(!d){s.innerHTML='<option value="">Select a division first</option>';s.disabled=true;o.style.display='none';
+    h.textContent=cur?'Current category: '+cur+' (not in the new list; pick a division to change it)':'';return}
+  s.disabled=false;h.textContent='';const list=DIVS[d],inList=list.includes(cur);
+  s.innerHTML='<option value="">Select category</option>'+list.map(c=>'<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>').join('')+'<option value="__o"'+(cur&&!inList?' selected':'')+'>Other (type a new one)…</option>';
+  if(cur&&!inList){o.style.display='';o.value=cur}else{o.style.display='none';o.value=''}}
+function divPick(){$('f3').value='';$('f3o').value='';divFill()}
+function catPick(typed){
+  const s=$('f3s'),o=$('f3o');
+  if(typed){$('f3').value=o.value.trim();return}
+  if(s.value==='__o'){o.style.display='';$('f3').value=o.value.trim();o.focus()}else{o.style.display='none';$('f3').value=s.value}}
+function prodForm(id){const p=id?prod(id):{};
+  modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' product</h3><label>Item no.</label><input id="f0" value="'+esc(p.itemNo)+'" placeholder="e.g. 1024"><label>Brand / name</label><input id="f1" value="'+esc(p.name)+'"><label>Generic name</label><input id="f2" value="'+esc(p.generic)+'"><label>Barcode</label><input id="f10" value="'+esc(p.barcode)+'">'+
+  '<div class="row2"><div><label>Division</label><select id="f3d" onchange="divPick()"><option value="">Select division</option>'+Object.keys(DIVS).map(d=>'<option'+(d===(CAT_DIV[p.category]||'')?' selected':'')+'>'+d+'</option>').join('')+'</select></div><div><label>Category</label><select id="f3s" onchange="catPick()"></select><input id="f3o" placeholder="Type the category" style="display:none;margin-top:6px" oninput="catPick(1)"><input id="f3" type="hidden" value="'+esc(p.category)+'"><div class="sm" id="f3h"></div></div><div><label>Supplier</label><select id="f8"><option value="">—</option>'+S.suppliers.map(s=>'<option value="'+s.id+'"'+(s.id===p.supplier?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'+
+  '<div><label>Unit cost (₱) — what you paid</label><input id="f11" type="number" min="0" step="0.01" inputmode="decimal" value="'+esc(p.cost>0?p.cost:'')+'" oninput="mgPrev()"></div><div><label>Sale price (₱) — what you charge</label><input id="f4" type="number" min="0" step="0.01" inputmode="decimal" value="'+esc(p.price)+'" oninput="mgPrev()"></div>'+
+  '<div><label>Stock</label><input id="f5" type="number" value="'+esc(p.stock||0)+'"></div><div><label>Reorder level</label><input id="f6" type="number" value="'+esc(p.reorder==null?10:p.reorder)+'"></div><div><label>Expiry date</label><input id="f7" type="date" value="'+esc(p.expiry)+'"></div></div>'+
+  '<div class="hint" id="mgn"></div><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f9" style="width:auto"'+(p.rx?' checked':'')+'> Prescription-only (Rx)</label><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveProd(\''+(id||'')+'\')">Save</button></div><div class="err" id="fe"></div>');divFill();mgPrev()}
+async function saveProd(id){
+  const pr=parseFloat(v('f4')),co=parseFloat(v('f11')||'0'),e=$('fe');
+  if(!v('f1').trim()||!(pr>=0)){e.textContent='Name and sale price are required.';return}
+  if(!(co>=0)){e.textContent='Unit cost must be 0 or more.';return}
+  if(co>pr&&!confirm('Unit cost is higher than the sale price. Save anyway?'))return;
+  const d={item_no:v('f0').trim()||null,name:v('f1').trim(),generic:v('f2').trim(),barcode:v('f10').trim()||null,category:v('f3').trim(),price:pr,stock:parseInt(v('f5'))||0,reorder:parseInt(v('f6'))||0,expiry:v('f7')||null,supplier_id:v('f8')||null,rx:$('f9').checked};
+  let r,pid=id;
+  if(id)r=await sb.from('products').update(d).eq('id',id);else{r=await sb.from('products').insert(d).select('id').single();pid=r.data&&r.data.id}
+  if(r.error){e.textContent=/item_no/.test(r.error.message)?'The database needs add-item-no.sql first (see README).':r.error.message;return}
+  const c=await sb.from('product_costs').upsert({product_id:pid,cost:co||0});
+  if(c.error){e.textContent='Product saved, but unit cost was not: '+c.error.message+' (run migration.sql in Supabase first)';await load('products');return}
+  closeModal();await load('products');render()}
 </script>
 </body></html>
