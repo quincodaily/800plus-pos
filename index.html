@@ -817,7 +817,7 @@ async function poLoad(){
         b=await sb.from('purchase_order_items').select('*').order('id').range(0,4999);
   if(a.error||b.error){S.poF.err=(a.error||b.error).message;S.pos=[];S.poi=[]}
   else{S.poF.err='';S.pos=a.data;S.poi=b.data}
-  S.poF.ld=2;if(S.tab==='po')render()}
+  S.poF.ld=2;if(S.tab==='po'||S.tab==='stock')render()}
 function poSet(k,v){S.poF[k]=v;render()}
 
 function poHTML(){
@@ -847,9 +847,9 @@ function poNew(){S.pd={sup:'',exp:'',notes:'',items:[]};poFormShow()}
 function poFormShow(){
   const d=S.pd,tot=d.items.reduce((a,i)=>a+(+i.qty||0)*(+i.cost||0),0);
   modal('<h3 style="margin-top:0;color:var(--red)">New purchase order</h3>'+
-  '<div class="row2"><div><label>Supplier</label><select onchange="S.pd.sup=this.value;poFormShow()"><option value="">Select supplier</option>'+S.suppliers.map(s=>'<option value="'+s.id+'"'+(sameId(d.sup,s.id)?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'+
+  '<div class="row2"><div><label>Supplier</label><select onchange="poSupPick(this.value)"><option value="">Select supplier</option>'+S.suppliers.map(s=>'<option value="'+s.id+'"'+(sameId(d.sup,s.id)?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'+
   '<div><label>Expected delivery (optional)</label><input type="date" value="'+esc(d.exp)+'" oninput="S.pd.exp=this.value"></div></div>'+
-  '<label>Add product — type the name or scan the barcode</label><input id="pq" autocomplete="off" placeholder="Search…" oninput="poFind()" onkeydown="if(event.key===\'Enter\')poEnter()"><div id="pres"></div>'+
+  poAddBlock()+
   '<div style="margin:8px 0"><button onclick="poSuggest()">+ Add low-stock items'+(d.sup?' from this supplier':'')+'</button></div>'+
   '<div class="tbl"><table class="pol"><tr><th>Product</th><th class="r">Qty</th><th class="r">Unit cost (₱)</th><th class="r">Total</th><th></th></tr>'+
   (d.items.map((i,n)=>'<tr><td><b>'+esc(i.name)+'</b><div class="sm">in stock '+i.stock+'</div></td><td class="r"><input type="number" min="1" inputmode="numeric" style="width:80px" value="'+esc(i.qty)+'" oninput="poLine('+n+',\'qty\',this.value)"></td><td class="r"><input type="number" min="0" step="0.01" inputmode="decimal" style="width:96px" value="'+esc(i.cost)+'" oninput="poLine('+n+',\'cost\',this.value)"></td><td class="r" id="plt'+n+'">'+peso((+i.qty||0)*(+i.cost||0))+'</td><td><button class="x" onclick="poRm('+n+')">✕</button></td></tr>').join('')||'<tr><td colspan="5" class="sm">No items yet. Search a product above.</td></tr>')+
@@ -923,7 +923,7 @@ function poRecv(id){
    '<div><label>Expiry date</label><input id="re'+n+'" type="date"></div></div>'+
    '<div class="hint" id="rh'+n+'"></div><button style="padding:4px 10px;font-size:12px" onclick="rcRound('+n+')">Round price up to a whole peso</button></div>'}).join('')+
   '<label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input id="rupd" type="checkbox" checked style="width:auto"> Update each product’s unit cost and sale price</label><div class="tot big"><span>This delivery costs</span><span id="rtot"></span></div>'+
-  '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="poView(\''+id+'\')">Back</button><button class="p" style="flex:1" id="rbtn" onclick="poRecvSave()">Add to inventory</button></div><div class="err" id="rce"></div>');
+  '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="poBack(\''+id+'\')">Back</button><button class="p" style="flex:1" id="rbtn" onclick="poRecvSave()">Add to inventory</button></div><div class="err" id="rce"></div>');
   poWide();rows.forEach((r,n)=>rcHint(n));rcTot()}
 function rcHint(n){const c=parseFloat(v('rc'+n)),pr=parseFloat(v('rp'+n)),h=$('rh'+n);if(!h)return;
   h.innerHTML=c>0&&pr>=0?(pr<c?'<span class="neg">Selling below cost!</span> ':'')+'Profit per piece: <b>'+peso(pr-c)+'</b> · markup '+((pr-c)/c*100).toFixed(1)+'% · margin '+(pr>0?((pr-c)/pr*100).toFixed(1):'0')+'%':'';rcTot()}
@@ -949,14 +949,14 @@ async function poRecvSave(){
     const u=await sb.from('purchase_order_items').update({received_qty:l.r.got+l.q}).eq('id',l.r.iid);
     if(u.error){e.textContent='Stock was added for '+l.r.name+' but the order could not be updated: '+u.error.message;b.disabled=false;await finishRecv();return}
     done++}
-  await finishRecv();poView(R.id)}
+  await finishRecv();if(S.tab==='stock'){closeModal();render()}else poView(R.id)}
 async function finishRecv(){
   const R=S.pr;await poLoad();const po=S.pos.find(x=>sameId(x.id,R.id));
   if(po&&po.status!=='cancelled'){const it=poItems(po),all=it.length&&it.every(i=>i.received_qty>=i.qty),any=it.some(i=>i.received_qty>0);
     const st=all?'received':any?'partial':po.status;
     if(st!==po.status)await sb.from('purchase_orders').update({status:st,received_at:all?new Date().toISOString():null}).eq('id',po.id);
     await poLoad()}
-  await Promise.all(['products','stockins'].map(load));if(S.tab==='po')render()}
+  await Promise.all(['products','stockins'].map(load));if(S.tab==='po'||S.tab==='stock')render()}
 </script>
 <style id="v7css">
 body.cash .ctb{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
@@ -1412,5 +1412,44 @@ function adminShell(u){
 (function(){const a0=adminHTML;adminHTML=function(){const u=user();if(u&&ROLE_TABS[u.role]&&!ROLE_TABS[u.role].includes(S.tab))S.tab=ROLE_TABS[u.role][0];return a0()}})();
 (function(){const g0=go;go=function(t){const u=user();if(u&&ROLE_TABS[u.role]&&!ROLE_TABS[u.role].includes(t))return;return g0(t)}})();
 (function(){const r0=render;render=function(){const u=user(),b=document.body;['manager','warehouse'].forEach(r=>b.classList.toggle('role-'+r,!!u&&u.role===r));r0()}})();
+</script>
+<script id="v15js">
+/* ===== v15: PO form picks products from the chosen supplier; Stock in = incoming deliveries (open purchase orders) ===== */
+function poAddBlock(){
+  const d=S.pd;
+  if(!d.sup)return '<div class="sm" style="margin:8px 0">Choose a supplier first. Its products will show here.</div>';
+  const have=new Set(d.items.map(i=>String(i.pid)));
+  const sp=S.products.filter(p=>sameId(p.supplier,d.sup)&&!have.has(String(p.id))).sort((a,b)=>a.name.localeCompare(b.name));
+  return '<label>Add a product from this supplier</label><select id="pps" onchange="poPick(this.value)"><option value="">'+(sp.length?'Select product… ('+sp.length+')':(have.size?'All of this supplier’s products are added':'No products are linked to this supplier yet'))+'</option>'+
+    sp.map(p=>'<option value="'+p.id+'">'+esc(p.name)+(p.itemNo?' · '+esc(p.itemNo):'')+' · stock '+p.stock+'</option>').join('')+'</select>'+
+    (d.all?'<label>Search all products</label><input id="pq" autocomplete="off" placeholder="Name, item no. or barcode…" oninput="poFind()" onkeydown="if(event.key===\'Enter\')poEnter()"><div id="pres"></div>':
+           '<div class="sm" style="margin-top:6px"><a href="#" onclick="S.pd.all=true;poFormShow();return false" style="color:var(--red)">Product not listed? Search all products</a></div>')}
+function poPick(id){if(id)poAdd(id)}
+function poSupPick(v){
+  const d=S.pd;
+  if(d.items.length&&String(v)!==String(d.sup)){if(!confirm('Changing the supplier clears the items you added. Continue?')){poFormShow();return}d.items=[]}
+  d.sup=v;d.all=false;poFormShow()}
+function poBack(id){if(S.tab==='stock')closeModal();else poView(id)}
+
+TITLES.stock=['Stock in','Incoming deliveries: tap one to receive it'];
+(function(){const g1=go;go=function(t){if(t==='stock')S.poF.ld=0;return g1(t)}})();
+function stockHTML(){
+  if(!S.poF.ld)poLoad();
+  const F=S.poF;
+  if(F.err)return '<div class="card" style="border:2px solid var(--red)"><h3 style="margin-top:0;color:var(--red)">Incoming deliveries need a database update</h3><p class="sm">Run <b>purchase-orders.sql</b> once in Supabase › SQL Editor (and <b>roles-warehouse-manager.sql</b> again if this is a warehouse account), then reload this page.</p><p class="sm">'+esc(F.err)+'</p></div>';
+  const today=new Date(),ymd=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const open=S.pos.filter(p=>p.status==='ordered'||p.status==='partial').sort((a,b)=>(a.expected||'9999').localeCompare(b.expected||'9999')||String(a.created_at).localeCompare(String(b.created_at)));
+  const rem=p=>poItems(p).reduce((a,i)=>a+Math.max(i.qty-i.received_qty,0),0),remV=p=>poItems(p).reduce((a,i)=>a+Math.max(i.qty-i.received_qty,0)*(+i.unit_cost||0),0);
+  const units=open.reduce((a,p)=>a+rem(p),0),val=open.reduce((a,p)=>a+remV(p),0),late=open.filter(p=>p.expected&&p.expected<ymd).length;
+  const card=(c,k,n,l)=>'<div class="ivc '+c+'"><i>'+(IC[k]?ico(k,18):ivi(k,18))+'</i><b>'+n+'</b><span>'+l+'</span></div>';
+  const rec=S.stockins.slice().sort((a,b)=>b.ts-a.ts),t0=new Date().setHours(0,0,0,0),td=rec.filter(s=>s.ts>=t0);
+  return '<div class="ivs">'+card('y','truck',open.length,'Incoming deliveries')+card('o','box',units.toLocaleString(),'Units to receive')+card('g','trend',peso(val),'Value (at cost)')+card('r','warn',late,'Overdue')+'</div>'+
+  '<div class="ivt"><div class="tbl"><table style="min-width:820px"><thead><tr><th>PO #</th><th>Supplier</th><th>Items</th><th>Expected</th><th class="r">Units left</th><th class="r">Value</th><th>Status</th><th></th></tr></thead><tbody>'+
+  (F.ld!==2?'<tr><td colspan="8" class="sm" style="padding:22px;text-align:center">Loading…</td></tr>':open.map(p=>{
+    const it=poItems(p).filter(i=>i.qty-i.received_qty>0),names=it.slice(0,3).map(i=>esc(i.name)).join(', ')+(it.length>3?' +'+(it.length-3)+' more':''),isLate=p.expected&&p.expected<ymd,st=PO_ST[p.status]||['?','can'];
+    return '<tr style="cursor:pointer" onclick="poRecv(\''+p.id+'\')"><td><b>'+esc(p.po_no)+'</b><div class="sm">'+poDate(p.created_at)+'</div></td><td>'+(poSup(p.supplier_id).name?'<span class="sup">'+esc(poSup(p.supplier_id).name)+'</span>':'<span class="sm">—</span>')+'</td><td class="sm" style="max-width:260px">'+names+'</td><td>'+(p.expected?poDate(p.expected+'T00:00:00')+(isLate?' <span class="sb exp">Overdue</span>':''):'<span class="sm">—</span>')+'</td><td class="r"><b>'+rem(p)+'</b></td><td class="r">'+peso(remV(p))+'</td><td><span class="sb '+st[1]+'">'+st[0]+'</span></td><td><button class="g" onclick="event.stopPropagation();poRecv(\''+p.id+'\')">Receive</button>'+(isAdmin()?' <button onclick="event.stopPropagation();poView(\''+p.id+'\')">View</button>':'')+'</td></tr>'}).join('')||'<tr><td colspan="8" class="sm" style="padding:22px;text-align:center">No incoming deliveries.'+(isAdmin()?' Create a purchase order first (Purchase Orders page).':' Ask the admin to create a purchase order.')+'</td></tr>')+
+  '</tbody></table></div></div>'+
+  '<div class="card" style="margin-top:14px"><h3 style="margin-top:0;color:var(--red)">Recently received</h3><div class="sm" style="margin-bottom:8px">Today: '+td.length+' item'+(td.length===1?'':'s')+' received</div><div class="tbl"><table><tr><th>Product</th><th class="r">Qty</th><th class="r">Unit cost</th><th class="r">Total</th><th>Date</th></tr>'+
+  (rec.slice(0,20).map(s=>'<tr><td>'+esc(s.name)+'</td><td class="r">+'+s.qty+'</td><td class="r">'+(s.cost>0?peso(s.cost):'<span class="sm">—</span>')+'</td><td class="r">'+(s.cost>0?peso(s.cost*s.qty):'<span class="sm">—</span>')+'</td><td class="sm">'+new Date(s.ts).toLocaleDateString()+'</td></tr>').join('')||'<tr><td colspan="5" class="sm">Nothing received yet.</td></tr>')+'</table></div></div>'}
 </script>
 </body></html>
