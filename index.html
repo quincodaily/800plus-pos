@@ -1108,4 +1108,175 @@ async function saveProd(id){
   if(c.error){e.textContent='Product saved, but unit cost was not: '+c.error.message+' (run migration.sql in Supabase first)';await load('products');return}
   closeModal();await load('products');render()}
 </script>
+<script id="v11js">
+/* ===== v11: shifts + X reading (per cashier) + Z reading (whole day) ===== */
+S.shift=null;S.shiftState=0;S.endedShift=null;S.shiftOff=false;S.shiftMissing=false;S.zr=[];S.shl=[];S.zrLd=0;S.zrErr='';
+const isCash=()=>{const u=user();return !!u&&u.role!=='admin'};
+const fT=t=>t?new Date(t).toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+const fTm=t=>t?new Date(t).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'—';
+const sgn=n=>(n<0?'−':'+')+peso(Math.abs(+n||0));
+async function rpcJ(fn,args){
+  const {data,error}=await sb.rpc(fn,args||{});
+  if(error){const m=error.message||'Error';throw new Error(/could not find the function|schema cache/i.test(m)?'The database needs shifts.sql first (see README).':m)}
+  return data}
+
+/* ---------- load / gate / sidebar card ---------- */
+async function loadShift(){
+  try{
+    const {data,error}=await sb.from('shifts').select('*').eq('cashier_id',S.uid).is('ended_at',null).order('started_at',{ascending:false}).limit(1);
+    if(error)throw error;
+    S.shift=data[0]||null;S.shiftOff=false;S.shiftMissing=false;LS.set('pos_shift',{uid:S.uid,shift:S.shift})
+  }catch(e){
+    const m=String(e.message||e),c=LS.get('pos_shift',null);
+    if(navigator.onLine&&/relation|does not exist|schema cache|could not find/i.test(m)){S.shiftOff=true;S.shiftMissing=true;S.shift=null}
+    else if(c&&c.uid===S.uid){S.shift=c.shift}
+    else{S.shiftOff=true;S.shift=null}   // offline and nothing saved: do not block selling
+  }
+  S.shiftState=2;render()}
+function shiftHook(){
+  if(!S.me||!S.uid){S.shiftState=0;S.shift=null;S.endedShift=null;return}
+  if(!isCash())return;
+  if(S.shiftState===0){S.shiftState=1;loadShift();return}
+  if(S.shiftState!==2)return;
+  shiftPaint();
+  if(!S.shiftOff&&!S.shift&&!document.querySelector('#modal .mb'))shiftGate()}
+(function(){const r0=render;render=function(){r0();try{shiftHook()}catch(e){console.error(e)}}})();
+(function(){const c0=checkout;checkout=function(){
+  if(isCash()&&!S.shiftOff&&!S.shift){if(S.shiftState!==2){alert('Checking your shift. Try again in a moment.');return}shiftGate();return}
+  return c0.apply(this,arguments)}})();
+(function(){const g0=go;go=function(t){if(t==='rep')S.zrLd=0;return g0(t)}})();
+function shiftPaint(){
+  const st=$('st');if(!st||$('shf'))return;
+  let h;
+  if(S.shiftMissing)h='<div class="sc" id="shf"><span>SHIFT</span><b style="font-size:14px">Not set up</b><span>Run shifts.sql in Supabase</span></div>';
+  else if(S.shiftOff)return;
+  else if(S.shift)h='<div class="sc" id="shf"><span>SHIFT OPEN</span><b style="font-size:17px">since '+fTm(S.shift.started_at)+'</b><span>Opening cash '+peso(+S.shift.opening_cash||0)+'</span><div class="qa" style="margin-top:8px"><button onclick="xRead()">X Reading</button><button onclick="shiftEndAsk()">End Shift</button></div></div>';
+  else h='<div class="sc" id="shf"><span>SHIFT</span><b style="font-size:17px">Not started</b><div class="qa" style="margin-top:8px"><button onclick="shiftGate()">Start Shift</button></div></div>';
+  st.insertAdjacentHTML('beforebegin',h)}
+function shiftGate(){if(S.endedShift)showEnded();else shiftStartAsk(true)}
+
+/* ---------- start shift ---------- */
+function shiftStartAsk(gate){
+  const u=user();
+  modal('<h3 style="margin-top:0;color:var(--red)">Start shift</h3><div class="sm" style="margin-bottom:10px">Cashier: <b>'+esc(u.name||u.username)+'</b> · '+fT(new Date())+'</div><label>Opening cash in the drawer (₱)</label><input id="sh_open" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">'+
+  '<div style="display:flex;gap:8px;margin-top:14px">'+(gate?'<button onclick="closeModal();logout()">Logout</button>':'<button onclick="closeModal()">Cancel</button>')+'<button class="p" style="flex:1" id="sh_btn" onclick="shiftStart()">Start shift</button></div><div class="err" id="sh_e"></div><div class="sm" style="margin-top:8px">A shift must be started before you can sell.</div>')}
+async function shiftStart(){
+  const e=$('sh_e'),b=$('sh_btn'),o=parseFloat(v('sh_open')||'0');
+  if(!(o>=0)){e.textContent='Opening cash must be 0 or more.';return}
+  if(!navigator.onLine){e.textContent='Connect to the internet to start a shift.';return}
+  b.disabled=true;
+  try{S.shift=await rpcJ('start_shift',{opening:o});S.endedShift=null;LS.set('pos_shift',{uid:S.uid,shift:S.shift});closeModal();render()}
+  catch(x){e.textContent=x.message;b.disabled=false}}
+
+/* ---------- reading documents (58mm) ---------- */
+const RD={dash:'<div style="border-top:2px dashed #000;margin:9px 0"></div>',
+  row:(l,r,b)=>'<div style="display:flex;justify-content:space-between;gap:6px;align-items:baseline'+(b?';font-weight:800':'')+'"><span>'+l+'</span><span>'+r+'</span></div>',
+  head:t=>'<div style="font-weight:900;font-size:12px;letter-spacing:.06em;margin:2px 0 4px">'+t+'</div>'};
+const PAYN={cash:'Cash',gcash:'GCash',card:'Card'};
+function payRows(sm){const bp=sm.by_pay||{},g=k=>bp[k]||{count:0,amount:0},ks=['cash','gcash','card'].concat(Object.keys(bp).filter(k=>!PAYN[k]));return ks.map(k=>[k,g(k)])}
+function rdDoc(kind,sm,i){
+  const r=RD.row,d=RD.dash,vd=sm.voided||{};
+  let h='<div style="text-align:center;font-size:20px;font-weight:900">'+esc(STORE.name)+'</div>'+(STORE.addr?'<div style="text-align:center;font-size:12px">'+esc(STORE.addr)+'</div>':'')+
+    '<div style="text-align:center;font-size:17px;font-weight:900;margin-top:8px;letter-spacing:.04em">'+(kind==='Z'?'Z READING':'X READING')+'</div><div style="text-align:center;font-size:12px">'+(kind==='Z'?'End of day report (whole store)':i.all?'All cashiers, since last Z reading':'Shift report')+'</div>'+(i.reprint?'<div style="text-align:center;font-weight:800;font-size:12px;margin-top:4px">*** REPRINT ***</div>':'')+d;
+  if(kind==='Z')h+=r('Z No.',String(i.z_no).padStart(6,'0'),1);
+  if(kind==='X'&&!i.all)h+=r('Cashier',esc(i.cashier));
+  h+=r(kind==='X'&&!i.all?'Shift start':'From',fT(i.from))+(i.to?r(kind==='X'&&!i.all?'Shift end':'To',fT(i.to)):'')+r('Printed',fT(new Date()));
+  if(kind==='Z')h+=r('Issued by',esc(i.by));
+  h+=d+RD.head('SALES SUMMARY')+r('Transactions',sm.count||0)+r('Gross sales',peso(+sm.gross||0))+r('Discounts','−'+peso(+sm.discount||0))+r('NET SALES',peso(+sm.net||0),1)+
+     d+RD.head('PAYMENT METHOD')+payRows(sm).map(([k,x])=>r((PAYN[k]||esc(k))+' ('+x.count+')',peso(+x.amount||0))).join('')+
+     d+RD.head('VOIDED (not counted)')+r('Voided sales ('+(vd.count||0)+')',peso(+vd.amount||0));
+  if(kind==='X'&&!i.all&&i.opening!=null){
+    const cash=+((sm.by_pay||{}).cash||{}).amount||0,exp=(+i.opening||0)+cash;
+    h+=d+RD.head('CASH DRAWER')+r('Opening cash',peso(+i.opening||0))+r('+ Cash sales',peso(cash))+r('Expected cash',peso(exp),1)+(i.counted!=null?r('Counted cash',peso(+i.counted))+r('Over / Short',sgn(i.counted-exp),1):'')}
+  if(kind==='Z'||i.all){
+    h+=d+RD.head('PER CASHIER')+((sm.by_cashier||[]).map(c=>'<div style="margin-bottom:6px"><div style="font-weight:800">'+esc(c.cashier)+'</div>'+r('Transactions',c.count)+r('Net sales',peso(+c.net||0),1)+r('Cash',peso(+c.cash||0))+r('GCash',peso(+c.gcash||0))+r('Card',peso(+c.card||0))+'</div>').join('')||'<div>No sales</div>')}
+  if(kind==='Z'&&(sm.shifts||[]).length){
+    let tot=0,any=false;
+    h+=d+RD.head('SHIFTS')+sm.shifts.map(s=>{const os=s.over_short;if(os!=null){tot+=+os;any=true}return '<div style="margin-bottom:5px"><div style="font-weight:800">'+esc(s.cashier)+'</div>'+r(fTm(s.started_at)+' – '+fTm(s.ended_at),os==null?'not counted':sgn(os))+'</div>'}).join('')+(any?r('Total over / short',sgn(tot),1):'')}
+  h+=d+'<div style="margin-top:12px">'+(kind==='X'&&!i.all?'Cashier: ________________':'Prepared by: ________________')+'</div><div style="margin-top:14px">Checked by: ________________</div>'+
+     '<div style="text-align:center;font-weight:900;margin-top:12px">*** '+(kind==='Z'?'END OF DAY - Z READING':'X READING')+' ***</div>';
+  return h}
+function showReading(kind,sm,info,btns){
+  modal('<div class="rd" style="font:600 13.5px/1.5 Arial,Helvetica,sans-serif;color:#000;background:#fff;padding:18px 14px 22px;border-radius:10px">'+rdDoc(kind,sm,info)+'</div><div class="noprint rcb" style="flex-wrap:wrap">'+(btns||[]).map(b=>'<button class="'+(b[2]||'')+'" onclick="'+b[1]+'">'+b[0]+'</button>').join('')+'</div>')}
+function printRd(){
+  const el=document.querySelector('#modal .rd');if(!el){window.print();return}
+  printDoc('Reading',el.outerHTML+'<div style="height:24mm"></div>','@page{size:58mm auto;margin:0}html,body{margin:0;padding:0;background:#fff}body{width:46mm;margin:0 auto;padding:2mm 0;color:#000;font:600 13px Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rd{padding:0!important;border-radius:0!important;background:#fff!important}')}
+
+/* ---------- X reading (mid-shift, does not close the shift) ---------- */
+async function xRead(){
+  if(!S.shift)return;
+  try{const sm=await rpcJ('sales_summary',{t_from:S.shift.started_at,t_to:null,who:S.me});
+    showReading('X',sm,{cashier:S.me,from:S.shift.started_at,to:null,opening:+S.shift.opening_cash||0},[['🖨 Print X reading','printRd()','g'],['Close','closeModal()','p']])}
+  catch(x){alert(x.message)}}
+
+/* ---------- end shift ---------- */
+async function shiftEndAsk(){
+  if(!S.shift)return;
+  if(LS.get('pos_q',[]).length){alert('Some sales are still waiting to sync. Connect to the internet and wait until they are synced before ending the shift.');return}
+  if(!navigator.onLine){alert('Connect to the internet to end the shift.');return}
+  let sm;try{sm=await rpcJ('sales_summary',{t_from:S.shift.started_at,t_to:null,who:S.me})}catch(x){alert(x.message);return}
+  const cash=+((sm.by_pay||{}).cash||{}).amount||0,exp=(+S.shift.opening_cash||0)+cash,r=RD.row;S.endExp=exp;
+  modal('<h3 style="margin-top:0;color:var(--red)">End shift</h3><div style="font-weight:600;font-size:14px">'+r('Transactions',sm.count||0)+r('Net sales',peso(+sm.net||0),1)+payRows(sm).map(([k,x])=>r((PAYN[k]||esc(k)),peso(+x.amount||0))).join('')+'<div style="border-top:1px dashed var(--bd);margin:8px 0"></div>'+r('Opening cash',peso(+S.shift.opening_cash||0))+r('Expected cash in drawer',peso(exp),1)+'</div>'+
+  '<label>Cash counted in the drawer (₱)</label><input id="sh_cnt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="shiftOS()"><div id="sh_os" style="font-weight:700;margin-top:6px"></div>'+
+  '<div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" id="sh_btn" onclick="shiftEnd()">End shift &amp; show X reading</button></div><div class="err" id="sh_e"></div>')}
+function shiftOS(){const c=parseFloat(v('sh_cnt')),el=$('sh_os');el.textContent=isNaN(c)?'':'Over / Short: '+sgn(c-S.endExp)}
+async function shiftEnd(){
+  const c=parseFloat(v('sh_cnt')),e=$('sh_e'),b=$('sh_btn');
+  if(isNaN(c)||c<0){e.textContent='Enter the cash counted in the drawer.';return}
+  if(LS.get('pos_q',[]).length){e.textContent='Some sales are still waiting to sync.';return}
+  if(!confirm('End your shift now? You will need to start a new shift to sell again.'))return;
+  b.disabled=true;
+  try{const row=await rpcJ('end_shift',{sid:S.shift.id,counted:c});S.endedShift=row;S.shift=null;LS.set('pos_shift',{uid:S.uid,shift:null});showEnded()}
+  catch(x){e.textContent=x.message;b.disabled=false}}
+function showEnded(){
+  const r=S.endedShift;if(!r)return closeModal();
+  showReading('X',r.summary||{},{cashier:r.cashier,from:r.started_at,to:r.ended_at,opening:+r.opening_cash||0,counted:r.closing_cash==null?null:+r.closing_cash},
+    [['🖨 Print X reading','printRd()','g'],['Z reading (end of day)','zAsk()'],['Start new shift','S.endedShift=null;shiftStartAsk(true)','p'],['Logout','S.endedShift=null;closeModal();logout()']])}
+
+/* ---------- Z reading (whole store, closes the day) ---------- */
+function zAsk(){
+  const back=S.endedShift?'showEnded()':'closeModal()';
+  modal('<h3 style="margin-top:0;color:var(--red)">Issue Z reading?</h3><p class="sm">The Z reading is the end-of-day report for the <b>whole store</b>: every cashier, every sale since the last Z reading. It gets the next Z number and cannot be undone. All cashiers must have ended their shift first.</p><div style="display:flex;gap:8px"><button onclick="'+back+'">Cancel</button><button class="p" style="flex:1" id="z_btn" onclick="zIssue()">Issue Z reading</button></div><div class="err" id="z_e"></div>')}
+async function zIssue(){
+  const b=$('z_btn');b.disabled=true;
+  try{const z=await rpcJ('issue_z_reading');S.zrLd=0;zShow(z,false)}
+  catch(x){$('z_e').textContent=x.message;b.disabled=false}}
+function zShow(z,re){
+  const s=z.summary||{};
+  showReading('Z',s,{z_no:z.z_no,from:z.period_start,to:z.period_end,by:z.created_by,reprint:re},[['🖨 Print Z reading','printRd()','g'],S.endedShift?['Back','showEnded()']:['Close','closeModal();render()','p']])}
+
+/* ---------- admin: Reports page card ---------- */
+async function loadZ(){
+  S.zrLd=1;
+  try{
+    const a=await sb.from('z_readings').select('*').order('z_no',{ascending:false}).limit(30),
+          b=await sb.from('shifts').select('*').order('started_at',{ascending:false}).limit(30);
+    if(a.error||b.error)throw (a.error||b.error);
+    S.zr=a.data;S.shl=b.data;S.zrErr=''
+  }catch(e){S.zrErr=String(e.message||e)}
+  S.zrLd=2;if(S.tab==='rep')render()}
+async function xAll(){
+  try{
+    const last=S.zr&&S.zr[0],from=last?last.period_end:new Date(new Date().setHours(0,0,0,0)).toISOString(),
+          sm=await rpcJ('sales_summary',{t_from:from,t_to:null,who:null});
+    showReading('X',sm,{all:true,from,to:null,cashier:''},[['🖨 Print X reading','printRd()','g'],['Close','closeModal()','p']])}
+  catch(x){alert(x.message)}}
+function shiftReprint(i){const r=S.shl[i];if(!r||!r.summary)return;
+  showReading('X',r.summary,{cashier:r.cashier,from:r.started_at,to:r.ended_at,opening:+r.opening_cash||0,counted:r.closing_cash==null?null:+r.closing_cash,reprint:true},[['🖨 Print X reading','printRd()','g'],['Close','closeModal()','p']])}
+async function forceEnd(i){
+  const r=S.shl[i];if(!r||r.ended_at)return;
+  if(!confirm('End '+r.cashier+'\'s shift now? Cash will be recorded as not counted.'))return;
+  try{await rpcJ('end_shift',{sid:r.id,counted:null});S.zrLd=0;render()}catch(x){alert(x.message)}}
+function readingsHTML(){
+  if(!S.zrLd)loadZ();
+  const open=S.shl.map((s,i)=>[s,i]).filter(x=>!x[0].ended_at);
+  if(S.zrErr)return '<div class="card" style="margin-top:14px"><h3 style="margin-top:0">Shifts &amp; readings</h3><p class="sm">'+(/relation|does not exist|schema cache|could not find/i.test(S.zrErr)?'Run <b>shifts.sql</b> once in Supabase › SQL Editor to turn this on.':esc(S.zrErr))+'</p></div>';
+  return '<div class="card" style="margin-top:14px"><h3 style="margin-top:0">Shifts &amp; readings</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="xAll()">X reading (all cashiers)</button><button class="p" onclick="zAsk()">Issue Z reading</button></div>'+
+  (open.length?'<h4>Open shifts</h4><div class="tbl"><table><tr><th>Cashier</th><th>Started</th><th></th></tr>'+open.map(([s,i])=>'<tr><td>'+esc(s.cashier)+'</td><td>'+fT(s.started_at)+'</td><td><button class="x" onclick="forceEnd('+i+')">Force end</button></td></tr>').join('')+'</table></div>':'')+
+  '<h4>Z readings</h4><div class="tbl"><table><tr><th>Z No.</th><th>Issued</th><th>Period</th><th class="r">Net sales</th><th>By</th><th></th></tr>'+
+  (S.zr.map((z,i)=>'<tr><td><b>'+String(z.z_no).padStart(6,'0')+'</b></td><td>'+fT(z.created_at)+'</td><td>'+fT(z.period_start)+' – '+fT(z.period_end)+'</td><td class="r">'+peso(+(z.summary||{}).net||0)+'</td><td>'+esc(z.created_by)+'</td><td><button onclick="zShow(S.zr['+i+'],true)">Reprint</button></td></tr>').join('')||'<tr><td colspan="6" class="sm">No Z readings yet.</td></tr>')+'</table></div>'+
+  '<h4>Recent shifts</h4><div class="tbl"><table><tr><th>Cashier</th><th>Start</th><th>End</th><th class="r">Opening</th><th class="r">Counted</th><th class="r">Over / Short</th><th></th></tr>'+
+  (S.shl.map((s,i)=>{const os=s.closing_cash==null||s.expected_cash==null?null:s.closing_cash-s.expected_cash;return '<tr><td>'+esc(s.cashier)+'</td><td>'+fT(s.started_at)+'</td><td>'+(s.ended_at?fT(s.ended_at):'<b>OPEN</b>')+'</td><td class="r">'+peso(+s.opening_cash||0)+'</td><td class="r">'+(s.closing_cash==null?'—':peso(+s.closing_cash))+'</td><td class="r '+(os!=null&&os<0?'neg':'')+'">'+(os==null?'—':sgn(os))+'</td><td>'+(s.ended_at?'<button onclick="shiftReprint('+i+')">X</button>':'')+'</td></tr>'}).join('')||'<tr><td colspan="7" class="sm">No shifts yet.</td></tr>')+'</table></div></div>'}
+(function(){const r=repHTML;repHTML=function(){return r()+readingsHTML()}})();
+</script>
 </body></html>
