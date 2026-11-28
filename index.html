@@ -285,7 +285,7 @@ function repHTML(){const t0=new Date().setHours(0,0,0,0),from=rangeFrom(S.range)
   const tp=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5);
   return '<div class="card"><select style="width:auto" onchange="S.range=this.value;render()"><option value="today">Today</option><option value="week"'+(S.range==='week'?' selected':'')+'>Last 7 days</option><option value="month"'+(S.range==='month'?' selected':'')+'>This month</option><option value="all"'+(S.range==='all'?' selected':'')+'>All time</option></select> <button onclick="exportSold()">\u2b07 Export quantity sold</button><div class="stats" style="margin-top:12px"><div class="card stat"><span class="sm">Revenue</span><b>'+peso(l.reduce((a,s)=>a+s.total,0))+'</b></div><div class="card stat"><span class="sm">Profit</span><b>'+peso(l.reduce((a,x)=>a+x.total-(x.cost||0),0))+'</b></div><div class="card stat"><span class="sm">Transactions</span><b>'+l.length+'</b></div><div class="card stat"><span class="sm">Discounts given</span><b>'+peso(l.reduce((a,s)=>a+s.discount,0))+'</b></div></div><div class="pos" style="grid-template-columns:1fr 1fr"><div><b>By cashier</b><table>'+Object.entries(by).map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+peso(e[1])+'</td></tr>').join('')+'</table></div><div><b>Top sellers</b><table>'+tp.map(e=>'<tr><td>'+esc(e[0])+'</td><td>'+e[1]+' sold</td></tr>').join('')+'</table></div></div><b>Sales log</b><div class="tbl"><table><tr><th>Time</th><th>Cashier</th><th>Items</th><th>Total</th></tr>'+l.slice(0,100).map(s=>'<tr><td>'+new Date(s.ts).toLocaleString()+'</td><td>'+esc(s.cashier)+'</td><td>'+s.items.map(i=>i.qty+'× '+esc(i.name)).join(', ')+(s.discount?' <span class="tag">'+esc(s.discType)+'</span>':'')+(s.oversold?' <span class="tag r">OVERSOLD</span>':'')+(s.offline?' <span class="tag w">offline</span>':'')+'</td><td>'+peso(s.total)+'</td></tr>').join('')+'</table></div></div>'}
 function usrHTML(){return '<div class="card"><button class="p" onclick="usrForm()">+ Add account</button><div class="tbl" style="margin-top:10px"><table><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr>'+S.users.map(u=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td style="white-space:nowrap"><button onclick="usrForm(\''+u.id+'\')">Edit</button> '+(u.username!==S.me?'<button class="x" onclick="del(\'users\',\''+u.id+'\')">✕</button>':'')+'</td></tr>').join('')+'</table></div></div>'}
-function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier">Cashier</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
+function usrForm(id){const u=id?S.users.find(x=>x.id===id):{};modal('<h3 style="margin-top:0;color:var(--red)">'+(id?'Edit':'Add')+' account</h3><label>Full name</label><input id="u1" value="'+esc(u.name)+'"><label>Username</label><input id="u2" value="'+esc(u.username)+'" '+(id?'disabled':'')+'><label>Password</label><input id="u3" value="'+esc(u.password)+'"><label>Role</label><select id="u4"><option value="cashier"'+(u.role==='cashier'?' selected':'')+'>Cashier</option><option value="salesrep"'+(u.role==='salesrep'?' selected':'')+'>Sales rep</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select><div style="display:flex;gap:8px;margin-top:14px"><button onclick="closeModal()">Cancel</button><button class="p" style="flex:1" onclick="saveUsr(\''+(id||'')+'\')">Save</button></div><div class="err" id="ue"></div>')}
 async function saveUsr(id){const un=v('u2').trim().toLowerCase();if(!un||!v('u3')){$('ue').textContent='Username and password are required.';return}
   if(!id&&S.users.some(x=>x.username===un)){$('ue').textContent='Username already taken.';return}
   const d={name:v('u1').trim()||un,username:un,password:v('u3'),role:v('u4')};
@@ -1111,7 +1111,7 @@ async function saveProd(id){
 <script id="v11js">
 /* ===== v11: shifts + X reading (per cashier) + Z reading (whole day) ===== */
 S.shift=null;S.shiftState=0;S.endedShift=null;S.shiftOff=false;S.shiftMissing=false;S.zr=[];S.shl=[];S.zrLd=0;S.zrErr='';
-const isCash=()=>{const u=user();return !!u&&u.role!=='admin'};
+const isCash=()=>{const u=user();return !!u&&u.role==='cashier'};
 const fT=t=>t?new Date(t).toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 const fTm=t=>t?new Date(t).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'—';
 const sgn=n=>(n<0?'−':'+')+peso(Math.abs(+n||0));
@@ -1278,5 +1278,117 @@ function readingsHTML(){
   '<h4>Recent shifts</h4><div class="tbl"><table><tr><th>Cashier</th><th>Start</th><th>End</th><th class="r">Opening</th><th class="r">Counted</th><th class="r">Over / Short</th><th></th></tr>'+
   (S.shl.map((s,i)=>{const os=s.closing_cash==null||s.expected_cash==null?null:s.closing_cash-s.expected_cash;return '<tr><td>'+esc(s.cashier)+'</td><td>'+fT(s.started_at)+'</td><td>'+(s.ended_at?fT(s.ended_at):'<b>OPEN</b>')+'</td><td class="r">'+peso(+s.opening_cash||0)+'</td><td class="r">'+(s.closing_cash==null?'—':peso(+s.closing_cash))+'</td><td class="r '+(os!=null&&os<0?'neg':'')+'">'+(os==null?'—':sgn(os))+'</td><td>'+(s.ended_at?'<button onclick="shiftReprint('+i+')">X</button>':'')+'</td></tr>'}).join('')||'<tr><td colspan="7" class="sm">No shifts yet.</td></tr>')+'</table></div></div>'}
 (function(){const r=repHTML;repHTML=function(){return r()+readingsHTML()}})();
+</script>
+<style id="v12css">
+#repbox{position:fixed;left:12px;top:70px;z-index:70;display:flex;flex-direction:column;gap:10px;width:min(310px,calc(100vw - 24px));max-height:calc(100vh - 90px);overflow:auto}
+.rpop{background:var(--card,#fff);color:var(--tx,#241a14);border:2px solid var(--red,#b3121b);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.3);overflow:hidden;animation:rpin .28s ease-out}
+@keyframes rpin{from{transform:translateX(-36px);opacity:0}to{transform:none;opacity:1}}
+.rph{background:var(--red,#b3121b);color:#fff;padding:9px 12px;display:flex;align-items:center;gap:8px}
+.rph b{font-size:14px}.rph span{font-size:11.5px;opacity:.9;flex:1}
+.rph button{background:transparent;border:0;color:#fff;font-size:16px;padding:0 4px;cursor:pointer}
+.rpb{padding:10px 12px;font-size:13px}
+.rpb .l{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.rpb .t{display:flex;justify-content:space-between;border-top:1px dashed var(--bd,#ccc);margin-top:6px;padding-top:6px;font-weight:800;font-size:15px}
+.rpb .n{margin-top:6px;font-size:12px;color:var(--mut,#777)}
+.rpf{padding:0 12px 12px}.rpf button{width:100%;padding:11px;font-size:14px;border-radius:10px}
+#rtoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2e7d32;color:#fff;padding:12px 18px;border-radius:12px;z-index:80;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+</style>
+<script id="v12js">
+/* ===== v12: sales rep accounts — rep sends the order, it pops up on the cashier's page (left side) ===== */
+S.rep=[];S.myrep=[];S.repLoaded=null;S.repDis={};S.repNote='';S.repStarted=false;S.inCheckout=0;
+const isRep=()=>{const u=user();return !!u&&u.role==='salesrep'};
+const isCashier=()=>{const u=user();return !!u&&u.role==='cashier'};
+const ordNo=o=>'#'+String(o.order_no||0).padStart(4,'0');
+async function rpcR(fn,args){
+  const {data,error}=await sb.rpc(fn,args||{});
+  if(error){const m=error.message||'Error';throw new Error(/could not find the function|schema cache/i.test(m)?'The database needs sales-rep.sql first (see README).':m)}
+  return data}
+
+/* ----- rep side: send instead of process sale ----- */
+(function(){const p0=paintRail;paintRail=function(){
+  p0();if(!isRep())return;
+  const g=document.querySelector('#pr .go');if(!g)return;
+  [...g.parentElement.children].forEach(c=>{if(c!==g&&c.id!=='ce')c.style.display='none'});
+  g.insertAdjacentHTML('beforebegin','<input id="repnote" placeholder="Note for the cashier (optional, e.g. customer name)" value="'+esc(S.repNote)+'" oninput="S.repNote=this.value" style="margin-bottom:8px">');
+  g.textContent='📨 Send to Cashier';g.setAttribute('onclick','sendRepOrder()')}})();
+async function sendRepOrder(){
+  const e=$('ce');
+  if(!S.cart.length){if(e)e.textContent='Cart is empty.';return}
+  if(!navigator.onLine){if(e)e.textContent='You are offline. Orders can only be sent when connected.';return}
+  const t=calc(),items=S.cart.map(c=>{const p=prod(c.id);return{id:c.id,name:p.name,qty:c.qty,price:p.price}});
+  try{
+    const o=await rpcR('send_rep_order',{p:{items,total:t.tot,dm:S.dm,dval:S.dval,idn:S.idn,note:(S.repNote||'').trim()}});
+    S.repNote='';S.repLoaded=null;clearSale();S.pm='prod';render();repToast('Order '+ordNo(o)+' sent to the cashier ✓');loadMyRep()}
+  catch(x){if(e)e.textContent=x.message}}
+function repToast(m){const old=document.getElementById('rtoast');if(old)old.remove();document.body.insertAdjacentHTML('beforeend','<div id="rtoast">'+esc(m)+'</div>');setTimeout(()=>{const t=document.getElementById('rtoast');if(t)t.remove()},3500)}
+async function loadMyRep(){
+  try{const {data,error}=await sb.from('rep_orders').select('*').eq('rep_id',S.uid).order('created_at',{ascending:false}).limit(15);if(!error){S.myrep=data;if(isRep())repPaint()}}catch(e){}}
+function myOrders(){
+  const lab=o=>({pending:'Waiting for cashier',claimed:'Being served by '+esc(o.claimed_by||'cashier'),done:'Paid ✓',cancelled:'Cancelled'})[o.status]||o.status;
+  modal('<h3 style="margin-top:0;color:var(--red)">My orders</h3>'+(S.myrep.length?'<table>'+S.myrep.map(o=>'<tr><td><b>'+ordNo(o)+'</b><div class="sm">'+fTm(o.created_at)+'</div></td><td>'+(o.items||[]).reduce((a,i)=>a+i.qty,0)+' items<div class="sm">'+peso(+o.total||0)+'</div></td><td>'+lab(o)+'</td><td>'+(o.status==='pending'?'<button class="x" onclick="repCancel(\''+o.id+'\')">Cancel</button>':'')+'</td></tr>').join('')+'</table>':'<div class="sm">No orders yet.</div>')+'<div style="margin-top:14px"><button onclick="closeModal()">Close</button></div>')}
+async function repCancel(id){if(!confirm('Cancel this order?'))return;try{await rpcR('cancel_rep_order',{oid:id});await loadMyRep();myOrders()}catch(x){alert(x.message)}}
+
+/* ----- cashier side: pop-up on the left + list ----- */
+async function loadRep(){
+  try{
+    const {data,error}=await sb.from('rep_orders').select('*').eq('status','pending').gte('created_at',new Date(Date.now()-24*3600e3).toISOString()).order('created_at',{ascending:true});
+    if(error)return;
+    const fresh=data.filter(o=>!S.rep.some(x=>x.id===o.id)&&Date.now()-new Date(o.created_at)<120000);
+    S.rep=data;repPopups();repPaint();
+    if(fresh.length)repBeep()
+  }catch(e){}}
+function repBeep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.08;o.start();setTimeout(()=>{o.stop();a.close()},220)}catch(e){}}
+function repPopups(){
+  let b=document.getElementById('repbox');
+  if(!b){document.body.insertAdjacentHTML('beforeend','<div id="repbox"></div>');b=document.getElementById('repbox')}
+  if(!isCashier()){b.innerHTML='';return}
+  const list=S.rep.filter(o=>!S.repDis[o.id]&&Date.now()-new Date(o.created_at)<30*60000).slice(0,3);
+  b.innerHTML=list.map(o=>{const it=o.items||[],more=it.length-6;
+    return '<div class="rpop"><div class="rph"><b>🔔 New order '+ordNo(o)+'</b><span>'+esc(o.rep)+' · '+fTm(o.created_at)+'</span><button onclick="repDismiss(\''+o.id+'\')" title="Hide">✕</button></div><div class="rpb">'+
+      it.slice(0,6).map(i=>'<div class="l"><span>'+i.qty+' × '+esc(i.name)+'</span><span>'+peso(i.qty*i.price)+'</span></div>').join('')+(more>0?'<div class="sm">+ '+more+' more item'+(more>1?'s':'')+'</div>':'')+
+      '<div class="t"><span>Total</span><span>'+peso(+o.total||0)+'</span></div>'+(o.note?'<div class="n">Note: '+esc(o.note)+'</div>':'')+'</div><div class="rpf"><button class="p" onclick="repLoad(\''+o.id+'\')">Load to cart</button></div></div>'}).join('')}
+function repDismiss(id){S.repDis[id]=1;repPopups()}
+async function repLoad(id){
+  if(S.cart.length){alert('Hold or clear the current sale first, then load the order.');return}
+  const o=S.rep.find(x=>x.id===id);if(!o)return;
+  try{await rpcR('claim_rep_order',{oid:id})}catch(x){alert(x.message);loadRep();return}
+  const miss=[];S.cart=[];
+  (o.items||[]).forEach(i=>{const p=prod(i.id);if(!p){miss.push(i.name+' (not found)');return}const q=Math.min(i.qty,p.stock);if(q<i.qty)miss.push(i.name+' (only '+p.stock+' in stock)');if(q>0)S.cart.push({id:i.id,qty:q})});
+  if(!S.cart.length){rpcR('release_rep_order',{oid:id}).then(loadRep).catch(()=>{});alert('None of the items could be loaded:\n'+miss.join('\n'));return}
+  S.dm=o.dm||'percent';S.dval=o.dval||'';S.idn=o.idn||'';S.rxok=false;S.cash='';S.repLoaded=id;S.pm='cart';
+  S.rep=S.rep.filter(x=>x.id!==id);closeModal();repPopups();render();
+  if(miss.length)alert('Some items could not be loaded fully:\n'+miss.join('\n'))}
+function repList(){
+  modal('<h3 style="margin-top:0;color:var(--red)">Orders from sales reps</h3>'+(S.rep.length?'<table>'+S.rep.map(o=>'<tr><td><b>'+ordNo(o)+'</b><div class="sm">'+esc(o.rep)+' · '+fTm(o.created_at)+'</div></td><td>'+(o.items||[]).reduce((a,i)=>a+i.qty,0)+' items<div class="sm">'+peso(+o.total||0)+'</div></td><td><button class="g" onclick="repLoad(\''+o.id+'\')">Load</button></td></tr>').join('')+'</table>':'<div class="sm">No orders waiting.</div>')+'<div style="margin-top:14px"><button onclick="closeModal()">Close</button></div>')}
+function repFinish(id){rpcR('finish_rep_order',{oid:id}).catch(()=>{})}
+function repRelease(id){rpcR('release_rep_order',{oid:id}).then(loadRep).catch(()=>{})}
+(function(){const c1=checkout;checkout=async function(){
+  if(isRep())return sendRepOrder();
+  const had=S.repLoaded;S.inCheckout=1;
+  try{return await c1.apply(this,arguments)}
+  finally{S.inCheckout=0;if(had&&!S.cart.length){S.repLoaded=null;repFinish(had)}}}})();
+(function(){const c0=clearSale;clearSale=function(){const had=S.repLoaded;c0();S.repLoaded=null;if(had&&!S.inCheckout)repRelease(had)}})();
+(function(){const h0=holdSale;holdSale=function(){const had=S.repLoaded;if(!S.cart.length)return;S.inCheckout=1;try{h0()}finally{S.inCheckout=0}S.repLoaded=null;if(had&&S.held.length)S.held[S.held.length-1].repId=had}})();
+(function(){const r0=resume;resume=function(i){const h=S.held[i],id=h&&h.repId;r0(i);if(id&&S.cart.length)S.repLoaded=id}})();
+
+/* ----- sidebar card + startup (runs after every render) ----- */
+function repPaint(){
+  const st=document.getElementById('st');if(!st)return;
+  const old=document.getElementById('repcard');if(old)old.remove();
+  if(isCashier())st.insertAdjacentHTML('beforebegin','<div class="sc" id="repcard"><span>REP ORDERS</span><b style="font-size:17px">'+S.rep.length+' waiting</b><div class="qa" style="margin-top:8px"><button onclick="repList()">View orders</button></div></div>');
+  else if(isRep()){
+    const t0=new Date().setHours(0,0,0,0),today=S.myrep.filter(o=>new Date(o.created_at)>=t0&&o.status!=='cancelled'),wait=S.myrep.filter(o=>o.status==='pending').length;
+    const first=document.querySelector('aside .sc');if(first)first.innerHTML='<span>ORDERS SENT TODAY</span><b>'+today.length+'</b><span>'+wait+' waiting for the cashier</span>';
+    st.insertAdjacentHTML('beforebegin','<div class="sc" id="repcard"><div class="qa"><button onclick="loadMyRep().then(myOrders)">📋 My orders</button></div></div>')}}
+function repHook(){
+  if(!S.me||!S.uid){S.rep=[];S.myrep=[];S.repLoaded=null;S.repStarted=false;repPopups();return}
+  if(isCashier()){
+    if(!S.repStarted){S.repStarted=true;loadRep();
+      try{sb.channel('rep_orders_live').on('postgres_changes',{event:'*',schema:'public',table:'rep_orders'},()=>loadRep()).subscribe()}catch(e){}
+      setInterval(()=>{if(isCashier()&&S.uid&&navigator.onLine)loadRep()},7000)}
+    repPaint()}
+  else if(isRep()){if(!S.repStarted){S.repStarted=true;loadMyRep()}repPaint()}
+  else repPopups()}
+(function(){const r0=render;render=function(){r0();try{repHook()}catch(e){console.error(e)}}})();
 </script>
 </body></html>
